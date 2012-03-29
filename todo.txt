@@ -1,0 +1,11 @@
+CODE:
+
+- include a "path" field type in solr so that faceting on path parts happens automagically
+- data stored in solr must be uniq, add a uniq filter which will add an id field to each record that is the md5sum of the entire message
+- json input
+- zeromq input (via twisted?)
+- rabbitmq input (vince not a fan)
+
+
+DOCS:
+- readme.txt
