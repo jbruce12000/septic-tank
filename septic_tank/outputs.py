@@ -23,6 +23,7 @@ class STDOutput(Output):
 class JSONOutput(Output):
     def __init__(self, **hints):
         self.hints = hints
+        super(JSONOutput, self).__init__()
 
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
@@ -30,7 +31,7 @@ class JSONOutput(Output):
         return data
 
 class SOLROutput(Output):
-    def __init__(self,solrurl,commitrate=1000):
+    def __init__(self,solrurl,commitrate=10000):
         super(SOLROutput, self).__init__()
         self.solrurl = solrurl
         self.conn = Solr(self.solrurl)
@@ -48,6 +49,12 @@ class SOLROutput(Output):
         for key in data:
             if 'date' in key:
                 skey = "%s_dt" % key
+            elif ('path' in key) or ('uri' in key) or ('url' in key):
+                skey = "%s_tp" % key
+            elif 'msg' == key:
+                skey = key
+            elif 'id' == key:
+                skey = key
             else:
                 skey = "%s_t" % key
             solrdata[skey] = data[key]
