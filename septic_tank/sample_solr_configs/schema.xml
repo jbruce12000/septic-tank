@@ -79,12 +79,15 @@
     <dynamicField name="*_sui"  type="string"  indexed="False"  stored="true"/>
     <!-- multivalued string field -->
     <dynamicField name="*_smu"  type="string"  indexed="False"  stored="true" multiValued="true"/>
+
+    <field name="msg" type="text" indexed="true" stored="false" multiValued="true"/>
+    <field name="id"      type="string"   indexed="true"  stored="true"  multiValued="false" required="false"/>
   </fields>
 
   <!-- field to use to determine and enforce document uniqueness. -->
-  <uniqueKey>id_s</uniqueKey>
+  <uniqueKey>id</uniqueKey>
   <!-- field for the QueryParser to use when an explicit fieldname is absent -->
-  <defaultSearchField>msg_s</defaultSearchField>
+  <defaultSearchField>msg</defaultSearchField>
 
   <!-- SolrQueryParser configuration: defaultOperator="AND|OR" -->
   <solrQueryParser defaultOperator="AND" />
