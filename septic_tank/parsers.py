@@ -60,6 +60,7 @@ class RegexParser(Parser):
         for key in self.use:
             if key not in self.expanded.regs:
                 raise Exception, 'key %s given in use is not supplied in regs' % key
+            logging.debug('compiling regex %s = %s' % (key,self.expanded.regs[key]))
             self.compiled[key] = re.compile(self.expanded.regs[key])
 
     def execute(self,line):

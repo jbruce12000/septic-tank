@@ -33,6 +33,11 @@
     <fieldType name="sdouble" class="solr.SortableDoubleField" sortMissingLast="true" omitNorms="true"/>
     <fieldType name="date" class="solr.TrieDateField" omitNorms="true" precisionStep="0" positionIncrementGap="0"/>
 
+    <fieldType name="text_path" class="solr.TextField" positionIncrementGap="100">
+      <analyzer>
+        <tokenizer class="solr.PathHierarchyTokenizerFactory" delimiter="/"/>
+      </analyzer>
+    </fieldType>
 
     <fieldType name="text" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
@@ -75,6 +80,7 @@
     <dynamicField name="*_f"  type="sfloat"  indexed="true"  stored="true"/>
     <dynamicField name="*_d"  type="sdouble" indexed="true"  stored="true"/>
     <dynamicField name="*_dt" type="date"    indexed="true"  stored="true"/>
+    <dynamicField name="*_tp" type="text_path" indexed="true" stored="true"/>
     <!-- unindexed string field -->
     <dynamicField name="*_sui"  type="string"  indexed="False"  stored="true"/>
     <!-- multivalued string field -->

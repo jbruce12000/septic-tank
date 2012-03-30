@@ -16,6 +16,9 @@ class UniqFilter(Filter):
 
     NOTE: This does not prevent the record from passing through even if 
           previously seen.  This intended to be used with solr.  
+
+    FUTURE: this could easily be made to have uniq output with limits on how 
+            much gets stored.
     '''
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
@@ -58,7 +61,6 @@ class ZuluDateFilter(Filter):
         return data
 
     def zulu(self,tstamp):
-        # fix - need to import datetime and use isoformat
         return time.strftime(self.outformat,
               time.gmtime(time.mktime(time.strptime(tstamp, self.informat))))
 

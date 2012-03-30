@@ -3,10 +3,10 @@ import logging
 from pipeline import Pipeline
 from inputs import FileInput
 from parsers import RegexParser 
-from filters import ZuluDateFilter, RemoveFieldsFilter, GrepFilter, LCFilter
+from filters import ZuluDateFilter, RemoveFieldsFilter, GrepFilter, LCFilter, UniqFilter
 from outputs import STDOutput, JSONOutput, SOLROutput
 
-logging.basicConfig(filename='./debug.log', level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(message)s')
+logging.basicConfig(filename='./debug.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
 
 if __name__ == "__main__":
 
@@ -15,20 +15,28 @@ if __name__ == "__main__":
     #p = RegexParser(use = ['irclog']) 
     #zdf = ZuluDateFilter(fields=['date'],informat="%Y-%m-%d %H:%M")
 
-    i = FileInput('solr.some.txt')
-    p = RegexParser(use = ['solrlog','solradd']) 
+    #i = FileInput('solr.txt')
+    #p = RegexParser(use = ['solrlog','solradd']) 
+    #zdf = ZuluDateFilter(fields=['date'])
+
+    i = FileInput('all.access.log')
+    p = RegexParser(use = ['apachelog']) 
     zdf = ZuluDateFilter(fields=['date'])
+
 
     rff = RemoveFieldsFilter(fields = ['ip'])
     gf = GrepFilter(regex='459184')
     lcf = LCFilter()
+    uniq = UniqFilter()
     stdout = STDOutput()
     jsout = JSONOutput(sort_keys=True, indent=2)
     solr = SOLROutput('http://localhost:8080/solr/medley')
 
-    pipeline = Pipeline(pipes = [i,p,zdf,stdout])
+    # fix there is a bug in jsout for the all.access.log
+    pipeline = Pipeline(pipes = [i,p,uniq,jsout])
     for data in pipeline:
         pass 
+
     
 
     # need a director which makes flow decisions based on dict contents
