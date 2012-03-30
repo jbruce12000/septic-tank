@@ -30,7 +30,7 @@ regs = {
     "client_ip" : "(?P<client_ip>\d+\.\d+\.\d+\.\d+)",
     "serve_time" : "(?P<serve_time>\d+)",
     #[29/Mar/2012:02:28:00 -0400]
-    "apache_date" : "\[(?P<apache_date>{{day_of_month}}/{{month_str}}/{{yyyy}}:{{hh:mm:ss}} {{tz_offset}})\]",
+    "apache_date" : "\[(?P<apache_date>{{day_of_month}}/{{month_str}}/{{yyyy}}:{{hh:mm:ss}}) {{tz_offset}}\]",
     "day_of_month" : "\d+",
     "month_str" : "[a-zA-Z]+",
     "yyyy" : "\d{4}",

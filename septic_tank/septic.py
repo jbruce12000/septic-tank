@@ -6,7 +6,7 @@ from parsers import RegexParser
 from filters import ZuluDateFilter, RemoveFieldsFilter, GrepFilter, LCFilter, UniqFilter
 from outputs import STDOutput, JSONOutput, SOLROutput
 
-logging.basicConfig(filename='./debug.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
+logging.basicConfig(filename='./debug.log', level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(message)s')
 
 if __name__ == "__main__":
 
@@ -21,7 +21,8 @@ if __name__ == "__main__":
 
     i = FileInput('all.access.log')
     p = RegexParser(use = ['apachelog']) 
-    zdf = ZuluDateFilter(fields=['date'])
+    # 29/Mar/2012:02:06:49 -0400
+    zdf = ZuluDateFilter(fields=['apache_date'],informat="%d/%b/%Y:%H:%M:%S")
 
 
     rff = RemoveFieldsFilter(fields = ['ip'])
@@ -33,7 +34,7 @@ if __name__ == "__main__":
     solr = SOLROutput('http://localhost:8080/solr/medley')
 
     # fix there is a bug in jsout for the all.access.log
-    pipeline = Pipeline(pipes = [i,p,uniq,jsout])
+    pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,solr])
     for data in pipeline:
         pass 
 
