@@ -1,7 +1,23 @@
 #!/usr/bin/env python
 import unittest
 from unittest import TestCase
-from filters import LCFilter, RemoveFieldsFilter, GrepFilter, ZuluDateFilter
+from filters import LCFilter, RemoveFieldsFilter, GrepFilter, ZuluDateFilter, UniqFilter
+
+class UniqFilterTestCase(TestCase):
+    def setUp(self):
+        self.uf = UniqFilter()
+        self.data = { 'key1' : 'val1', 'key2' : 'val2', 'key3' : 'val3' }
+
+    def test_execute(self):
+        hashed = 'e16e52079dc94c9a05ed3ae1da5e3f48'
+        self.assertEqual(self.uf.execute(self.data)['id'],hashed)
+        # this is duplicated on purpose to make sure hashing many times
+        # does not change the hash
+        self.assertEqual(self.uf.execute(self.data)['id'],hashed)
+
+    def test_flatten_dict(self):
+        flat = 'key1val1key2val2key3val3'
+        self.assertEqual(self.uf.flatten_dict(self.data),flat)
 
 class LCFilterTestCase(TestCase):
     def setUp(self):

@@ -2,16 +2,40 @@ from pipeline import Pipe
 import logging
 import re
 import time
+import hashlib
 
 class Filter(Pipe):
     def __init__(self,fields=[]):
         super(Filter, self).__init__()
         self.fields = fields
 
+class UniqFilter(Filter):
+    '''
+    Adds an id key to the record [which is a dict] passing through the pipeline.
+    the value of the id key is an md5sum of the content of the record.
+
+    NOTE: This does not prevent the record from passing through even if 
+          previously seen.  This intended to be used with solr.  
+    '''
+    def execute(self,data):
+        logging.debug('%s execute with data %s' % (type(self),data))
+        if 'id' in data:
+            del data['id']
+        m = hashlib.md5()
+        m.update(self.flatten_dict(data))
+        data['id'] = m.hexdigest() 
+        return data
+
+    def flatten_dict(self,mydict):
+        output = ''
+        for key in sorted(mydict.iterkeys()):
+            output = "%s%s%s" % (output, key, mydict[key])
+        return output
+
 class ZuluDateFilter(Filter):
     '''
     converts the datetime in the given field[s] from local to Zulu time
-    Any format can be read for input, and any format can be produced for
+    Any format can be read for inoput, and any format can be produced for
     output.
   
     informat = strptime format string for reading your timestamp

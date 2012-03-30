@@ -63,4 +63,3 @@ class SOLROutput(Output):
 
         # required at end of pipeline
         return data
-
