@@ -26,7 +26,7 @@ regs = {
     "solractiongroup" : "\{{{solraction}}=\[{{solrobjecttype}}\.{{solrobjectid}}\]\}",
     "solradd" : "{{yyyy-mm-dd hh:mm:ss,ms}} {{level}}  {{module}} {{address}} {{solractiongroup}} {{msg}}",
 
-    "hostname" : "(?P<hostname>[A-Za-z0-9.]+)",
+    "hostname" : "(?P<hostname>([A-Za-z0-9.]+)|(\d+\.\d+\.\d+\.\d+))",
     "client_ip" : "(?P<client_ip>\d+\.\d+\.\d+\.\d+)",
     "serve_time" : "(?P<serve_time>\d+)",
     #[29/Mar/2012:02:28:00 -0400]
@@ -37,13 +37,13 @@ regs = {
     "hh:mm:ss" : "\d{2}:\d{2}:\d{2}",
     "tz_offset" : "[+-]\d{4}",
     "apache_action" : "(?P<action>[A-Z]+)",
-    "uri" : "(?P<uri>(/[A-Za-z0-9$.+!*'(),~:#%_-]*)+)",
+    "uri" : "(?P<uri>(/[A-Za-z0-9 $.+!*'(),~:#%_-]*)+)",
     "query_params" : "(?P<query_params>\?[A-Za-z0-9$.+!*'(),~#%&/=:;_-]*)?",
-    "http_version" : "HTTP/(?P<http_version>[0-9.]+)",
+    "http_version" : "(HTTP/(?P<http_version>[0-9.]+))?",
     "http_status" : "(?P<http_status>\d+)",
     "bytes" : "(?P<bytes>(\d+|-))",
     "trash" : ".*",
-    "apachelog" : "{{hostname}} {{client_ip}} {{serve_time}} {{apache_date}} \"{{apache_action}} {{uri}}{{query_params}} {{http_version}}\" {{http_status}} {{bytes}} {{trash}}",
+    "apachelog" : "{{hostname}} {{client_ip}} {{serve_time}} {{apache_date}} \"{{apache_action}} {{uri}}{{query_params}}( |){{http_version}}\" {{http_status}} {{bytes}} {{trash}}",
     }
 
 
