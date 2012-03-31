@@ -45,7 +45,7 @@ class ZeroMQOutput(Output):
         self.poller.register(self.socket, zmq.POLLIN)
        
     def reconnect(self):
-        print "reconnecting..."
+        logging.debug('%s reconnecting to %s' % (type(self),self.addr))
         self.socket.close()
         self.context.term()
         self.context = zmq.Context()
@@ -55,7 +55,7 @@ class ZeroMQOutput(Output):
         self.poller.register(self.socket, zmq.POLLIN)
  
     def execute(self,data):
-        print "sending message %s" % data
+        logging.debug('%s execute with data %s' % (type(self),data))
         msg = json.dumps(data,separators=(',',':'))
         self.socket.send(msg,zmq.NOBLOCK)
 
