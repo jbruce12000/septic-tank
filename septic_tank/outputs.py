@@ -40,12 +40,33 @@ class ZeroMQOutput(Output):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.connect(self.addr)
-        
+        self.poller = zmq.Poller()
+        # zmq.POLLIN|zmq.POLLOUT
+        self.poller.register(self.socket, zmq.POLLIN)
+       
+    def reconnect(self):
+        print "reconnecting..."
+        self.socket.close()
+        self.context.term()
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.REQ)
+        self.socket.connect(self.addr)
+        self.poller = zmq.Poller()
+        self.poller.register(self.socket, zmq.POLLIN)
+ 
     def execute(self,data):
+        print "sending message %s" % data
         msg = json.dumps(data,separators=(',',':'))
-        self.socket.send(msg)
-        ignore = self.socket.recv()
-        return data 
+        self.socket.send(msg,zmq.NOBLOCK)
+
+        # if the server disconnects, reconnect in 1s
+        socks = dict(self.poller.poll(1000))
+        if socks:
+            ignore = self.socket.recv()
+            return data
+        else:
+            self.reconnect()
+
 
 class SOLROutput(Output):
     def __init__(self,solrurl,commitrate=10000):
