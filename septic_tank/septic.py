@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import logging
 from pipeline import Pipeline
-from inputs import FileInput
+from inputs import FileInput, ZeroMQInput
 from parsers import RegexParser 
 from filters import ZuluDateFilter, RemoveFieldsFilter, GrepFilter, LCFilter, UniqFilter
-from outputs import STDOutput, JSONOutput, SOLROutput
+from outputs import STDOutput, JSONOutput, SOLROutput, ZeroMQOutput
 
 logging.basicConfig(filename='./debug.log', level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(message)s')
 
@@ -32,6 +32,8 @@ if __name__ == "__main__":
     stdout = STDOutput()
     jsout = JSONOutput(sort_keys=True, indent=2)
     solr = SOLROutput('http://localhost:8080/solr/medley')
+    zmq_out = ZeroMQOutput()
+    zmq_in = ZeroMQInput()
 
     # fix there is a bug in jsout for the all.access.log
     pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,solr])

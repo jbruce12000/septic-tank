@@ -2,6 +2,7 @@ from pipeline import Pipe
 from pysolr import Solr
 import json
 import logging
+import zmq
 
 class Output(Pipe):
     def data_invalid(self,data):
@@ -29,6 +30,22 @@ class JSONOutput(Output):
         logging.debug('%s execute with data %s' % (type(self),data))
         print json.dumps(data,**self.hints)
         return data
+
+class ZeroMQOutput(Output):
+    def __init__(self,host='127.0.0.1', port='8001'):
+        super(ZeroMQOutput, self).__init__()
+        self.host = host
+        self.port = port
+        self.addr = 'tcp://%s:%s' % (host,port)
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.REQ)
+        self.socket.connect(self.addr)
+        
+    def execute(self,data):
+        msg = json.dumps(data,separators=(',',':'))
+        self.socket.send(msg)
+        ignore = self.socket.recv()
+        return data 
 
 class SOLROutput(Output):
     def __init__(self,solrurl,commitrate=10000):
