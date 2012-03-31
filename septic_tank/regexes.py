@@ -38,11 +38,12 @@ regs = {
     "tz_offset" : "[+-]\d{4}",
     "apache_action" : "(?P<action>[A-Z]+)",
     "uri" : "(?P<uri>(/[A-Za-z0-9$.+!*'(),~:#%_-]*)+)",
+    "query_params" : "(?P<query_params>\?[A-Za-z0-9$.+!*'(),~#%&/=:;_-]*)?",
     "http_version" : "HTTP/(?P<http_version>[0-9.]+)",
     "http_status" : "(?P<http_status>\d+)",
-    "bytes" : "(?P<bytes>\d+)",
+    "bytes" : "(?P<bytes>(\d+|-))",
     "trash" : ".*",
-    "apachelog" : "{{hostname}} {{client_ip}} {{serve_time}} {{apache_date}} \"{{apache_action}} {{uri}} {{http_version}}\" {{http_status}} {{bytes}} {{trash}}",
+    "apachelog" : "{{hostname}} {{client_ip}} {{serve_time}} {{apache_date}} \"{{apache_action}} {{uri}}{{query_params}} {{http_version}}\" {{http_status}} {{bytes}} {{trash}}",
     }
 
 

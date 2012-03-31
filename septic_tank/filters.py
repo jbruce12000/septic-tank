@@ -111,6 +111,7 @@ class LCFilter(Filter):
                     data[key] = data[key].lower()
         else:
             for key in data:
-                data[key] = data[key].lower()
+                if data[key] is not None:
+                    data[key] = data[key].lower()
         return data
 
