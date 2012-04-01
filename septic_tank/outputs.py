@@ -45,7 +45,7 @@ class ZeroMQOutput(Output):
         self.poller.register(self.socket, zmq.POLLIN)
        
     def reconnect(self):
-        logging.debug('%s reconnecting to %s' % (type(self),self.addr))
+        logging.warn('%s reconnecting to %s' % (type(self),self.addr))
         self.socket.close()
         self.context.term()
         self.context = zmq.Context()
@@ -57,15 +57,25 @@ class ZeroMQOutput(Output):
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
         msg = json.dumps(data,separators=(',',':'))
-        self.socket.send(msg,zmq.NOBLOCK)
+        try:
+            self.socket.send(msg,zmq.NOBLOCK)
+        except Exception,err:
+            logging.error('zeromq socket send error: %s' % str(err))
+            self.reconnect()
+            return None
 
-        # if the server disconnects, reconnect in 1s
+        # if the server disconnects, reconnect in one second
         socks = dict(self.poller.poll(1000))
         if socks:
-            ignore = self.socket.recv()
-            return data
-        else:
-            self.reconnect()
+            try:
+                ignore = self.socket.recv()
+                return data
+            except Exception,err:
+                logging.error('zeromq socket recv error: %s' % str(err))
+
+        # if I get here something bad happened.  reconnect.
+        self.reconnect()
+        return None
 
 
 class SOLROutput(Output):
@@ -101,10 +111,18 @@ class SOLROutput(Output):
 
         # commit every once and a while
         if(self.commityet >= self.commitrate):
-            logging.debug('adding %d docs to solr: %s' % (self.commityet,self.solrcache))
-            self.conn.add(self.solrcache)
-            self.commityet = 0
-            self.solrcache = []
+            logging.debug('adding %d docs to solr' % self.commityet)
+            try:
+                self.conn.add(self.solrcache)
+                self.commityet = 0
+                self.solrcache = []
+            except Exception, err:
+                # if solr is down, this fails at a rate of about 1/s until
+                # solr comes back up.  the backlog in the cache then gets
+                # written.
+                logging.error('solr cache size: %d' % len(self.solrcache))
+                logging.error('solr add error: %s' % str(err))
+                return None 
 
         # required at end of pipeline
         return data
