@@ -17,6 +17,6 @@ if __name__ == "__main__":
     uniq = UniqFilter()
     stdout = STDOutput()
 
-    pipeline = Pipeline(pipes = [zmq_in,lcf,zdf,uniq,stdout])
+    pipeline = Pipeline(pipes = [zmq_in,p,lcf,zdf,uniq,stdout])
     for data in pipeline:
         pass

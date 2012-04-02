@@ -10,9 +10,10 @@ logging.basicConfig(filename='./debug.log', level=logging.DEBUG, format='%(ascti
 
 if __name__ == "__main__":
     i = FileInput('all.access.log')
+    rg = GrepFilter(regex='health_check_status', reverse=True)
     p = RegexParser(use = ['apachelog'])
     zmq_out = ZeroMQOutput()
 
-    pipeline = Pipeline(pipes = [i,p,zmq_out])
+    pipeline = Pipeline(pipes = [i,rg,zmq_out])
     for data in pipeline:
         pass
