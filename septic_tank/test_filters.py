@@ -59,6 +59,26 @@ class GrepFilterTestCase(TestCase):
     def setUp(self):
         self.data = { 'field1' : 'here', 'field2' : 'I', 'field3' : 'am' }
 
+    def test_reverse_grep_string_no_match(self):
+        gf = GrepFilter(regex='nomatch', reverse=True)
+        string = 'testing a string'
+        self.assertEqual(gf.execute(string),string)
+
+    def test_reverse_grep_string_match(self):
+        gf = GrepFilter(regex='a string', reverse=True)
+        string = 'testing a string'
+        self.assertNotEqual(gf.execute(string),string)
+
+    def test_grep_string_match(self):
+        gf = GrepFilter(regex='a string')
+        string = 'testing a string'
+        self.assertEqual(gf.execute(string),string)
+
+    def test_grep_string_no_match(self):
+        gf = GrepFilter(regex='nomatch')
+        string = 'testing a string'
+        self.assertNotEqual(gf.execute(string),string)
+
     def test_search_all_fields_match(self):
         gf = GrepFilter(regex='ere.*')
         self.assertNotEqual(gf.execute(self.data),None)
@@ -77,6 +97,18 @@ class GrepFilterTestCase(TestCase):
 
     def test_bad_field_no_keyerror(self):
         gf = GrepFilter(regex='123',fields=['notafield'])
+        self.assertNotEqual(gf.execute(self.data),None)
+
+    def test_reverse_grep_dict_no_fields(self):
+        gf = GrepFilter(regex='123',reverse=True)
+        self.assertEqual(gf.execute(self.data),None)
+
+    def test_reverse_grep_dict_match(self):
+        gf = GrepFilter(regex='h.*re',fields=['field1'],reverse=True)
+        self.assertEqual(gf.execute(self.data),None)
+
+    def test_reverse_grep_dict_no_match(self):
+        gf = GrepFilter(regex='nomatch',fields=['field2'],reverse=True)
         self.assertNotEqual(gf.execute(self.data),None)
 
 class ZuluDateFilterTestCase(TestCase):

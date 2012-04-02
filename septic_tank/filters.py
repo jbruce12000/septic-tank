@@ -65,22 +65,63 @@ class ZuluDateFilter(Filter):
               time.gmtime(time.mktime(time.strptime(tstamp, self.informat))))
 
 class GrepFilter(Filter):
-    def __init__(self,regex,fields=[]):
+    '''
+    checks if the given input - either a string or dict matches a regular
+    expression.  
+    '''
+    def __init__(self,regex,fields=[],reverse=False):
         Filter.__init__(self,fields=fields)
         self.regex = re.compile(regex)
+        self.reverse = reverse
 
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
         if data is None:
             return data
+        if isinstance(data,dict):
+            if self.reverse:
+                return self.execute_reverse_dict(data)
+            return self.execute_dict(data)
+        elif isinstance(data,str):
+            if self.reverse:
+                return self.execute_reverse_str(data)
+            return self.execute_str(data)
+        else:
+            return None
+
+    def execute_reverse_str(self,data):
+        'like grep -v'
+        if self.regex.search(data):
+            return None
+        return data
+
+    def execute_str(self,data):
+        if self.regex.search(data):
+            return data
+        return None
+
+    def execute_reverse_dict(self,data):
+        '''
+        note that this only operates if fields are given
+        returns None if no fields are given
+        '''
+        if self.fields: 
+            for key in self.fields:
+                if key in data:
+                    if self.regex.search(data[key]):
+                        return None
+            return data
+        return None 
+
+    def execute_dict(self,data):
+
         if self.fields:
             for key in self.fields:
                 if key in data:
                     if self.regex.search(data[key]):
                         return data
-            # if a non-existent field is given, we should return data
-            for key in self.fields:
-                if key not in data:
+                else:
+                    # if a non-existent field is given, we should return data
                     return data
         else:
             for key in data:
