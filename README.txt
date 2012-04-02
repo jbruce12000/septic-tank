@@ -15,5 +15,12 @@ Outputs
 Outputs are used to put data into some system outside the pipeline.
 
 
-WARNINGS
+Warnings
+
 - never put the same pipe in two different pipelines
+
+Tests
+
+to run all tests...
+
+    python -m unittest discover

@@ -9,8 +9,10 @@ class Input(Pipe):
 class ZeroMQInput(Input):
     '''
     can handle line based input, or line based input in json format
+    host in this case is an interface.  used if you want zeromq to listen
+    on a specific interface.
     '''
-    def __init__(self,host='127.0.0.1', port='8001'):
+    def __init__(self,host='*', port='8001'):
         super(ZeroMQInput, self).__init__()
         self.host = host
         self.port = port
