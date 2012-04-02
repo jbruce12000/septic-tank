@@ -10,7 +10,7 @@ regs = {
     "irclog" : "{{team}}\|{{yyyy-mm-dd hh:mm}} \<{{user}}\> {{msg}}",
     "ircsys" : "{{team}}\|{{yyyy-mm-dd hh:mm}} \-\!\- {{msg}}",
     "ircaction" : "{{team}}\|{{yyyy-mm-dd hh:mm}}\s+\*(\s+|){{user}} {{action}}",
-
+    # solr logs
     "level" : "(?P<level>(INFO|ERROR|SEVERE|DEBUG))",
     "yyyy-mm-dd hh:mm:ss,ms" : "(?P<date>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)",
     "module" : "\[(?P<module>(\w|\.)+)\]",
@@ -26,6 +26,7 @@ regs = {
     "solractiongroup" : "\{{{solraction}}=\[{{solrobjecttype}}\.{{solrobjectid}}\]\}",
     "solradd" : "{{yyyy-mm-dd hh:mm:ss,ms}} {{level}}  {{module}} {{address}} {{solractiongroup}} {{msg}}",
 
+    # apache access logs
     "hostname" : "(?P<hostname>([A-Za-z0-9.]+)|(\d+\.\d+\.\d+\.\d+))",
     "client_ip" : "(?P<client_ip>\d+\.\d+\.\d+\.\d+)",
     "serve_time" : "(?P<serve_time>\d+)",

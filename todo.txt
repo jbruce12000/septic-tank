@@ -1,16 +1,13 @@
 CODE:
 
-- include a "path" field type in solr so that faceting on path parts happens automagically - solr.PathHierarchyTokenizerFactory
 - json input
-- rabbitmq input (vince not a fan)
 - multiline input, or make current input multiline
   could make it an aggregator that just goes after the input to aggregate
   lines.
 
 - need hostname, environment (OTIS,PROD) included in each record
 - need a reversegrep filter to remove records based on one or more fields
-- crashes when solr is not reachable
-- zmq needs to have timeout/retries on server side
+- add try / except to ZeroMQInput
 
 DOCS:
 - readme.txt

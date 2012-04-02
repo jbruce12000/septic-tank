@@ -19,12 +19,26 @@ class ZeroMQInput(Input):
         self.socket = self.context.socket(zmq.REP)
         self.socket.bind(self.addr)
 
+    def reconnect(self):
+        logging.warn('%s reconnecting to %s' % (type(self),self.addr))
+        self.socket.close()
+        self.context.term()
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.REP)
+        self.socket.bind(self.addr)
+
     def output(self):
-        msg = self.socket.recv()
-        print msg
-        self.socket.send('k')
-        msg = self.from_json(msg)
-        return msg
+        try:
+            msg = self.socket.recv()
+            # must send something to make zeromq happy
+            self.socket.send('k')
+            msg = self.from_json(msg)
+            return msg
+        except Exception, err:
+            logging.error('zeromq error: %s' % str(err))
+            self.reconnect()
+            return None
+ 
 
     def from_json(self,msg):
         '''
