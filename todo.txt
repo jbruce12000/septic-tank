@@ -6,8 +6,7 @@ CODE:
   lines.
 
 - need hostname, environment (OTIS,PROD) included in each record
-- need a reversegrep filter to remove records based on one or more fields
-- add try / except to ZeroMQInput
+- all filters should be able to read either a string or a dict
 
 DOCS:
 - readme.txt

@@ -1,0 +1,13 @@
+.DS_Store
+*.pyc
+*.pyo
+*.db
+*.egg-info
+ve
+pip-log.txt
+*~
+*#
+.#*
+*.sw[op]
+all.txt
+out

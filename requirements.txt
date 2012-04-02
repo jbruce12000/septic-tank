@@ -1,3 +1,2 @@
 pysolr
-#twisted
 pyzmq-static
