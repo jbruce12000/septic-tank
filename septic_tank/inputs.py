@@ -1,6 +1,7 @@
 from pipeline import Pipe
 import logging
 import json
+import sys
 import zmq
 
 class Input(Pipe):
@@ -56,10 +57,13 @@ class FileInput(Input):
     '''
     read a file as input line by line
     '''
-    def __init__(self,file):
+    def __init__(self,filename=sys.stdin):
         super(FileInput, self).__init__()
-        self.file = file
-        self.f = open(self.file, 'rb')
+        self.file = filename
+        if isinstance(self.file,file):
+            self.f = self.file
+        else:
+            self.f = open(self.file, 'rb')
 
     def output(self):
         if self.f:
@@ -69,3 +73,5 @@ class FileInput(Input):
             return line
         return None
 
+class StdInput(FileInput):
+    pass
