@@ -2,28 +2,27 @@ Got a shitload of logs? Septic Tank might be the tool for you.
 
 Septic Tank is a pipeline based data processor.  It is written in python, is fast, and has a low memory footprint. Each pipe in a pipeline has a very specific function.  Pipes may be put together in a pipeline in any way you like.  
 
-Inputs
-
-Inputs are used to get data into a pipeline.
-
-Filters / Parsers
-
-Filters and parsers are used to modify the data in the pipeline in some way.
-
-Outputs
-
-Outputs are used to put data into some system outside the pipeline.
-
-
-Getting Started
+Getting Started 
 
   git clone git://github.com/jbruce12000/septic-tank.git
   cd septic_tank
   virtualenv vseptic_tank
   source vseptic_tank/bin/activate
   pip install -r requirements.txt
-  # need a sample log to parse
-  # and a pipeline to parse it
+  ./make_sample_log.py | ./parse_sample_log.py |more
+
+
+Inputs
+
+  Inputs are used to get data into a pipeline.
+
+Filters / Parsers
+
+  Filters and parsers are used to modify the data in the pipeline in some way.
+
+Outputs
+
+  Outputs are used to put data into some system outside the pipeline.
 
 
 Warnings
@@ -34,4 +33,4 @@ Tests
 
 to run all tests...
 
-    python -m unittest discover
+  python -m unittest discover
