@@ -37,7 +37,6 @@ class FileWatcher(object):
         return self.regular_file()
 
     def regular_file(self):
-        #import pdb; pdb.set_trace()
         st = os.stat(self.absname)
         if S_ISREG(st.st_mode):
             return True
@@ -54,7 +53,9 @@ class FileWatcher(object):
         if self.rotated():
             logging.debug('file rotated %s' % self.absname)
             self.reopen()
-            lines = self.file.readlines()
+        if self.truncated():
+            logging.debug('file truncated %s' % self.absname)
+            self.reopen() 
         return lines
 
     def get_file_id(self):
@@ -64,6 +65,12 @@ class FileWatcher(object):
     def rotated(self):
         id = self.get_file_id()
         if id != self.file_id:
+            return True
+        return False
+
+    def truncated(self):
+        st = os.stat(self.absname)
+        if st.st_size < self.file.tell():
             return True
         return False
 
