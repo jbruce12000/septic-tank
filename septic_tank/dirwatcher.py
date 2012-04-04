@@ -24,14 +24,12 @@ class FileWatcher(object):
         if seek_end:
             self.file.seek(0,os.SEEK_END)
         self.file_id = self.get_file_id()
-        self.last_modified = 0
         logging.debug('watching file %s' % self.absname)
 
     def reopen(self):
         self.file.close()
         self.file = open(self.absname, "r")
         self.file_id = self.get_file_id()
-        self.last_modified = 0
 
     def regular_file(self):
         st = os.stat(self.absname)
@@ -44,25 +42,12 @@ class FileWatcher(object):
 
 
     def readfile(self):
-        lines = None
-        if self.modified():
-            lines = self.file.readlines()
+        lines = self.file.readlines()
         if self.rotated():
             logging.debug('file rotated %s' % self.absname)
             self.reopen()
             lines = self.file.readlines()
         return lines
-
-    def modified(self):
-        lm = self.get_last_modified()
-        if lm != self.last_modified:
-            self.last_modified = lm
-            return True
-        return False
-
-    def get_last_modified(self):
-        st = os.stat(self.absname)
-        return st.st_mtime
 
     def get_file_id(self):
         st = os.stat(self.absname)
