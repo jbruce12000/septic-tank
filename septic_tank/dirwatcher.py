@@ -42,12 +42,6 @@ class FileWatcher(object):
             return True
         return False
 
-# fix - when a file is truncated and added to, nothing happens
-# could check size and if it is less than last read, reload.
-
-# should files be closed after not having changed for n minutes?
-# they would just get re-opened, but that is ok
-
     def readfile(self):
         lines = self.file.readlines()
         if self.rotated():
