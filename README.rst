@@ -6,6 +6,7 @@ Septic Tank is a pipeline based data processor.  It is written in python, is fas
 
 Getting Started
 ---------------
+::
 
   git clone git://github.com/jbruce12000/septic-tank.git
   cd septic-tank
@@ -18,7 +19,7 @@ Getting Started
 
 Inputs
 ------
-Inputs are used to get data into a pipeline.
+Inputs are used to get data into a pipeline::
 
   stdin
   file
@@ -27,7 +28,7 @@ Inputs are used to get data into a pipeline.
 
 Filters / Parsers
 -----------------
-Filters and parsers are used to modify the data in the pipeline in some way.
+Filters and parsers are used to modify the data in the pipeline in some way::
 
   regular expression parser 
   date filter
@@ -38,7 +39,7 @@ Filters and parsers are used to modify the data in the pipeline in some way.
 
 Outputs
 -------
-Outputs are used to put data into some system outside the pipeline.
+Outputs are used to put data into some system outside the pipeline::
 
   stdout
   json
@@ -52,7 +53,7 @@ never put the same pipe in two different pipelines
 
 Tests
 -----
-to run all tests...
+to run all tests::
 
   export PYTHONPATH=~/septic_tank/septic_tank/
   cd ~/septic_tank/septic_tank/tests/
