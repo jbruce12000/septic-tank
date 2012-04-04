@@ -24,6 +24,7 @@ Inputs are used to get data into a pipeline::
   stdin
   file
   zeromq
+  dirwatcher
 
 
 Filters / Parsers
@@ -50,6 +51,7 @@ Outputs are used to put data into some system outside the pipeline::
 Warnings
 --------
 never put the same pipe in two different pipelines
+
 
 Tests
 -----
