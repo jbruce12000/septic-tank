@@ -34,4 +34,6 @@ Tests
 
 to run all tests...
 
+  export PYTHONPATH=~/septic_tank/septic_tank/
+  cd ~/septic_tank/septic_tank/tests/
   python -m unittest discover

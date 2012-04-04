@@ -1,2 +1,3 @@
 pysolr
 pyzmq-static
+pytest
