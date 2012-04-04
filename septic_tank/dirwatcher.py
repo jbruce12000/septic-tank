@@ -4,8 +4,16 @@ import re
 import time
 import os
 
-# generators are not working, need to punt. fuck.
 class FileWatcher(object):
+    '''
+    represents a watched file on the filesystem
+
+    folder = folder where the file is located
+    name = file name
+    seek_end = if you do not want to seek to the end of the file set this
+        to False.  All content in the file will be returned by readfile
+        if this is set to False.
+    '''
     def __init__(self,folder,name,seek_end=True):
         self.name = name
         self.folder = folder
@@ -31,10 +39,9 @@ class FileWatcher(object):
             return True
         return False
 
-    def __iter__(self):
-        return self
+# fix - when a file is truncated and added to, nothing happens
+# could check size and if it is less than last read, reload.
 
-    # fix new files do not get read
 
     def readfile(self):
         lines = None
@@ -75,11 +82,11 @@ class FileWatcher(object):
 class DirWatcher(Input):
     '''
     '''
-    def __init__(self, folder, regex='.*\.log'):
+    def __init__(self, folder, regex='.*\.log', sleepfor=5):
         '''
         '''
         super(DirWatcher, self).__init__()
-        self.sleep_between_checks = 60
+        self.sleep_between_checks = sleepfor
         self.files_map = {}
         self.folder = os.path.realpath(folder)
         self.regex = re.compile(regex)
@@ -140,4 +147,4 @@ class DirWatcher(Input):
                 except Exception, err:
                     pass
 
-        time.sleep(5)
+        time.sleep(self.sleep_between_checks)

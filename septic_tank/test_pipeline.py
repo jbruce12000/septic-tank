@@ -42,5 +42,6 @@ class PipelineTestCase(TestCase):
         self.assertEqual(pline.next(),'ok')
 
 if __name__ == '__main__':
+#    import pdb; pdb.set_trace()
     unittest.main()
 

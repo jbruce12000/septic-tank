@@ -17,7 +17,11 @@ class Pipeline(object):
             logging.debug('execute %d %s | %s' % (x,type(a),type(b)))
 
             # somewhere in the middle of the pipeline
-            b.cache.append(b.execute(a.output()))
+            output = a.output()
+            if output:
+                b.cache.append(b.execute(output))
+            else:
+                b.cache.append(None)
 
             # done, return what we got from the last pipe
             if x == len(self.pipes) - 1:

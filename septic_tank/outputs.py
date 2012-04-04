@@ -2,6 +2,7 @@ from pipeline import Pipe
 from pysolr import Solr
 import json
 import logging
+import sys
 import zmq
 
 class Output(Pipe):
@@ -19,6 +20,8 @@ class STDOutput(Output):
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
         print data
+        sys.stdout.flush()
+        
         return data
 
 class JSONOutput(Output):
@@ -29,6 +32,7 @@ class JSONOutput(Output):
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
         print json.dumps(data,**self.hints)
+        sys.stdout.flush()
         return data
 
 class ZeroMQOutput(Output):

@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import logging
 from pipeline import Pipeline
-from inputs import FileInput, ZeroMQInput
+from inputs import FileInput, ZeroMQInput, StdInput
 from parsers import RegexParser 
 from filters import ZuluDateFilter, RemoveFieldsFilter, GrepFilter, LCFilter, UniqFilter
 from outputs import STDOutput, JSONOutput, SOLROutput, ZeroMQOutput
+from dirwatcher import DirWatcher
 
 logging.basicConfig(filename='./debug.log', level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(message)s')
 
@@ -19,11 +20,13 @@ if __name__ == "__main__":
     #p = RegexParser(use = ['solrlog','solradd']) 
     #zdf = ZuluDateFilter(fields=['date'])
 
-    i = FileInput('all.access.log')
+    #stdin = StdInput()
+    #i = FileInput('all.access.log')
     p = RegexParser(use = ['apachelog']) 
     # 29/Mar/2012:02:06:49 -0400
     zdf = ZuluDateFilter(fields=['apache_date'],informat="%d/%b/%Y:%H:%M:%S")
 
+    dw = DirWatcher(folder="/home/jbruce/septic_tank/septic_tank/logs") 
 
     rff = RemoveFieldsFilter(fields = ['ip'])
     gf = GrepFilter(regex='459184')
@@ -36,10 +39,10 @@ if __name__ == "__main__":
     zmq_in = ZeroMQInput()
 
     # fix there is a bug in jsout for the all.access.log
-    pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,solr])
+    #pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,stdout])
+    pipeline = Pipeline(pipes = [dw,p,lcf,zdf,uniq,stdout])
     for data in pipeline:
         pass 
-
     
 
     # need a director which makes flow decisions based on dict contents
