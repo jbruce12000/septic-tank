@@ -3,6 +3,7 @@ import logging
 import re
 import time
 import os
+from stat import S_ISREG
 
 class FileWatcher(object):
     '''
@@ -18,7 +19,8 @@ class FileWatcher(object):
         self.name = name
         self.folder = folder
         self.absname = os.path.realpath(os.path.join(self.folder, self.name))
-        if not self.regular_file:
+        self.file = None
+        if not self.regular_file():
             raise
         self.file = open(self.absname, "r")
         if seek_end:
@@ -31,15 +33,21 @@ class FileWatcher(object):
         self.file = open(self.absname, "r")
         self.file_id = self.get_file_id()
 
+    def valid(self):
+        return self.regular_file()
+
     def regular_file(self):
+        #import pdb; pdb.set_trace()
         st = os.stat(self.absname)
-        if stat.S_ISREG(st.st_mode):
+        if S_ISREG(st.st_mode):
             return True
         return False
 
 # fix - when a file is truncated and added to, nothing happens
 # could check size and if it is less than last read, reload.
 
+# should files be closed after not having changed for n minutes?
+# they would just get re-opened, but that is ok
 
     def readfile(self):
         lines = self.file.readlines()
@@ -60,7 +68,8 @@ class FileWatcher(object):
         return False
 
     def __del__(self):
-        self.file.close()
+        if self.file:
+            self.file.close()
         logging.debug('file closed %s' % self.absname)
 
 
@@ -132,4 +141,16 @@ class DirWatcher(Input):
                 except Exception, err:
                     pass
 
+        # files in map that should not be
+        badfiles = []
+        for name in self.files_map:
+            try:
+                self.files_map[name].valid()
+            except Exception, err:
+                logging.debug('file bad %s %s' % (name,str(err)))
+                badfiles.append(name)
+        for key in badfiles:
+            logging.debug('unwatching file %s' % key)
+            del self.files_map[key]
+ 
         time.sleep(self.sleep_between_checks)
