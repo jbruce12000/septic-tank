@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import logging
+import socket
 from pipeline import Pipeline
 from inputs import FileInput, ZeroMQInput, StdInput
 from parsers import RegexParser 
-from filters import ZuluDateFilter, RemoveFieldsFilter, GrepFilter, LCFilter, UniqFilter
+from filters import ZuluDateFilter, RemoveFieldsFilter, GrepFilter, LCFilter, UniqFilter, AddFieldsFilter
 from outputs import STDOutput, JSONOutput, SOLROutput, ZeroMQOutput
 from dirwatcher import DirWatcher
 
@@ -28,7 +29,8 @@ if __name__ == "__main__":
 
     dw = DirWatcher(folder="/home/jbruce/septic_tank/septic_tank/logs") 
 
-    rff = RemoveFieldsFilter(fields = ['ip'])
+    rff = RemoveFieldsFilter(fields = ['msg'])
+    add_server = AddFieldsFilter({'server' : socket.gethostname()})
     gf = GrepFilter(regex='459184')
     lcf = LCFilter()
     uniq = UniqFilter()
@@ -40,7 +42,8 @@ if __name__ == "__main__":
 
     # fix there is a bug in jsout for the all.access.log
     #pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,stdout])
-    pipeline = Pipeline(pipes = [dw,p,lcf,zdf,uniq,stdout])
+    pipeline = Pipeline(pipes = [dw,p,rff,add_server,lcf,zdf,uniq,jsout])
+    #pipeline = Pipeline(pipes = [dw,stdout])
     for data in pipeline:
         pass 
     

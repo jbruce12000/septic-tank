@@ -129,6 +129,26 @@ class GrepFilter(Filter):
                     return data
         return None
 
+class AddFieldsFilter(Filter):
+    def __init__(self, fields={}):
+        # parent defineds fields=[], this must override
+        Filter.__init__(self,fields=fields)
+
+    def execute(self,data):
+        logging.debug('%s execute with data %s' % (type(self),data))
+        if data is None:
+            return data
+
+        if self.fields:
+           if isinstance(self.fields,dict):
+               data.update(self.fields)
+               return data
+
+        # we cannot add fields unless it is a dict, so we just pass on 
+        # what we got.
+        return data
+
+
 class RemoveFieldsFilter(Filter):
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))

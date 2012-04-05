@@ -94,5 +94,29 @@ class RegexParserTestCase(TestCase):
         m1 = self.parser.execute('')
         self.assertIsNone(m1)
 
+    def test_execute_dict(self):
+        m1 = self.parser.execute({'msg' : 'team1|2012-02-27 < jbruce> testing123', 'other' : 'should be retained'})
+        self.assertEqual(m1['type'],'irclog')
+        self.assertEqual(m1['team'],'team1')
+        self.assertEqual(m1['user'],'jbruce')
+        self.assertEqual(m1['date'],'2012-02-27')
+        self.assertEqual(m1['msg'],'testing123') 
+        self.assertEqual(m1['other'],'should be retained')
+
+    def test_execute_dict_with_parse_field(self):
+        self.parser = RegexParser(regs=self.regs,use=['irclog','team','word'],parse_field='parse_this')
+        m1 = self.parser.execute({'parse_this' : 'team1|2012-02-27 < jbruce> testing123', 'other' : 'should be retained'})
+        self.assertEqual(m1['type'],'irclog')
+        self.assertEqual(m1['team'],'team1')
+        self.assertEqual(m1['user'],'jbruce')
+        self.assertEqual(m1['date'],'2012-02-27')
+        self.assertEqual(m1['msg'],'testing123')
+        self.assertEqual(m1['other'],'should be retained')
+       
+    def test_execute_dict_with_parse_field_not_in_data(self):
+        self.parser = RegexParser(regs=self.regs,use=['irclog','team','word'],parse_field='parse_this')
+        m1 = self.parser.execute({'blah' : 'team1|2012-02-27 < jbruce> testing123', 'other' : 'should be retained'})
+        self.assertIsNone(m1)
+
 if __name__ == '__main__':
     unittest.main()

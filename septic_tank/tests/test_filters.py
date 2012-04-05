@@ -1,7 +1,26 @@
 #!/usr/bin/env python
 import unittest
 from unittest import TestCase
-from filters import LCFilter, RemoveFieldsFilter, GrepFilter, ZuluDateFilter, UniqFilter
+from filters import LCFilter, RemoveFieldsFilter, GrepFilter, ZuluDateFilter, UniqFilter, AddFieldsFilter
+
+class AddFieldsFilterTestCase(TestCase):
+    def setUp(self):
+        self.data = { 'key1' : 'val1' }
+
+    def test_execute_none(self):
+        aff = AddFieldsFilter()
+        self.assertIsNone(aff.execute(None))
+
+    def test_execute_fields_not_dict(self):
+        aff = AddFieldsFilter(fields=[])
+        self.assertEqual(aff.execute('unchanged'),'unchanged')
+
+    def test_execute(self):
+        aff = AddFieldsFilter(fields={'key2': 'val2','key3': 'val3'})
+        out = aff.execute(self.data)
+        self.assertEqual(out['key1'],'val1')
+        self.assertEqual(out['key2'],'val2')
+        self.assertEqual(out['key3'],'val3')
 
 class UniqFilterTestCase(TestCase):
     def setUp(self):

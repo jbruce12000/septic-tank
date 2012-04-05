@@ -46,12 +46,13 @@ class RegexParser(Parser):
     on a line using potentially a group of regular expressions.  the first
     matching regular expression wins.
     '''
-    def __init__(self,regs=regs,use=[]):
+    def __init__(self,regs=regs,use=[],parse_field='msg'):
         super(RegexParser, self).__init__()
         self.expanded = RegexExpander(regs=regs)
         if not use:
            raise Exception, 'use must be a list, and cannot be empty'
         self.use = use
+        self.parse_field = parse_field
         self.compiled = {}
         self.matches = defaultdict(int)
         self.compile()
@@ -63,10 +64,29 @@ class RegexParser(Parser):
             logging.debug('compiling regex %s = %s' % (key,self.expanded.regs[key]))
             self.compiled[key] = re.compile(self.expanded.regs[key])
 
-    def execute(self,line):
+    def execute(self,data):
         '''
-        search using each regex in use until we get a match
-        use is processed in order
+        This parses the given data using potentially many regexes.
+
+        data could be either a string or a dict.
+        if it is a string, we try to parse the string
+        if it is a dict, we use self.parse_field to determine what field
+            to parse
+        '''
+        if isinstance(data,str):
+            return self.search_line(data)
+        if isinstance(data,dict):
+            if self.parse_field in data:
+                captured = self.search_line(data[self.parse_field])
+                if captured:
+                    data.update(captured)
+                    return data
+                return None
+        
+    def search_line(self,line):
+        '''
+        search a single line using each regex in self.use until we get a match
+        self.use is processed in order
         '''
         for key in self.use:
             result = self.compiled[key].search(line)

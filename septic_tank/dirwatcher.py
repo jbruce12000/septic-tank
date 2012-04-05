@@ -44,13 +44,19 @@ class FileWatcher(object):
 
     def readfile(self):
         lines = self.file.readlines()
+        output = []
+        for line in lines:
+            entry = {}
+            entry['msg'] = line
+            entry['file'] = self.absname
+            output.append(entry)
         if self.rotated():
             logging.debug('file rotated %s' % self.absname)
             self.reopen()
         if self.truncated():
             logging.debug('file truncated %s' % self.absname)
             self.reopen() 
-        return lines
+        return output
 
     def get_file_id(self):
         st = os.stat(self.absname)
@@ -127,6 +133,7 @@ class DirWatcher(Input):
             if absname in self.files_map:
                 try:
                     lines = self.files_map[absname].readfile()
+                    #import pdb; pdb.set_trace()
                     if lines:
                         for line in lines:
                             self.cache.append(line) 
