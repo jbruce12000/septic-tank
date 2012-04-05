@@ -36,6 +36,7 @@ Filters and parsers are used to modify the data in the pipeline in some way::
   grep / reverse grep filter
   remove field filter
   lowercase filter
+  add fields filter
 
 
 Outputs
