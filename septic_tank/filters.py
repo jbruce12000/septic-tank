@@ -130,6 +130,17 @@ class GrepFilter(Filter):
         return None
 
 class AddFieldsFilter(Filter):
+    '''
+    Add a dictionary of keys and values to each record passing through
+    the pipeline.  Useful for adding out-of-band data like server (hostname)
+    to each record.
+    
+    inputs
+        fields = dict, required
+
+    outputs
+        updates every record in pipeline with the contents of the dict
+    '''
     def __init__(self, fields={}):
         # parent defineds fields=[], this must override
         Filter.__init__(self,fields=fields)
@@ -150,6 +161,12 @@ class AddFieldsFilter(Filter):
 
 
 class RemoveFieldsFilter(Filter):
+    '''
+    Remove fields from records passing through a pipeline.
+
+    inputs
+        fields = list, required
+    '''
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
         if data is None:
@@ -162,6 +179,13 @@ class RemoveFieldsFilter(Filter):
 
 
 class LCFilter(Filter):
+    '''
+    lowercase all fields, or specific fields of records passing through 
+    a pipeline.
+ 
+    inputs
+        fields = list, optional
+    '''
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
         if data is None:

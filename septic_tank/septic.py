@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # 29/Mar/2012:02:06:49 -0400
     zdf = ZuluDateFilter(fields=['apache_date'],informat="%d/%b/%Y:%H:%M:%S")
 
-    dw = DirWatcher(folder="/home/jbruce/septic_tank/septic_tank/logs") 
+    dw = DirWatcher(folder="/home/jbruce/septic_tank/septic_tank/logs", last_lines=0) 
 
     rff = RemoveFieldsFilter(fields = ['msg'])
     add_server = AddFieldsFilter({'server' : socket.gethostname()})
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # fix there is a bug in jsout for the all.access.log
     #pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,stdout])
-    pipeline = Pipeline(pipes = [dw,p,rff,add_server,lcf,zdf,uniq,jsout])
+    pipeline = Pipeline(pipes = [dw,p,rff,add_server,lcf,zdf,uniq,stdout])
     #pipeline = Pipeline(pipes = [dw,stdout])
     for data in pipeline:
         pass 
