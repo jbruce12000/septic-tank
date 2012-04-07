@@ -73,7 +73,8 @@ class RegexParser(Parser):
         if it is a dict, we use self.parse_field to determine what field
             to parse
         '''
-        if isinstance(data,str):
+        # fix - remove this string shit, should always be a dict
+        if isinstance(data,str) or isinstance(data,unicode):
             return self.search_line(data)
         if isinstance(data,dict):
             if self.parse_field in data:

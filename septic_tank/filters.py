@@ -82,7 +82,7 @@ class GrepFilter(Filter):
             if self.reverse:
                 return self.execute_reverse_dict(data)
             return self.execute_dict(data)
-        elif isinstance(data,str):
+        elif isinstance(data,str) or isinstance(data,unicode):
             if self.reverse:
                 return self.execute_reverse_str(data)
             return self.execute_str(data)

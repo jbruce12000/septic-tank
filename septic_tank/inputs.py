@@ -32,7 +32,9 @@ class ZeroMQInput(Input):
 
     def output(self):
         try:
+            #import pdb; pdb.set_trace()
             msg = self.socket.recv()
+            logging.debug('zeromq msg received: %s' % msg)
             # must send something to make zeromq happy
             self.socket.send('k')
             msg = self.from_json(msg)
@@ -41,6 +43,7 @@ class ZeroMQInput(Input):
             logging.error('zeromq error: %s' % str(err))
             self.reconnect()
             return None
+        
  
 
     def from_json(self,msg):
