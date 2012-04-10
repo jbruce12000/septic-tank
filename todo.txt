@@ -4,15 +4,14 @@ CODE:
 - multiline input, or make current input multiline
   could make it an aggregator that just goes after the input to aggregate
   lines.
-
-- need hostname, environment (OTIS,PROD) included in each record
 - all filters should be able to read either a string or a dict
 
 DOCS:
-- readme.txt
-- look at adeza's docs on https://github.com/alfredodeza/pytest.vim and emulate
+ 
 
 TESTS:
 - try py.test
 - adeza vim plugin (https://github.com/alfredodeza/pytest.vim)
-- move tests to their own dir
+
+EXPLORE:
+- pypy - might be a huge speed improvement for the centralized processor
