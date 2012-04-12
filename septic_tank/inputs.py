@@ -1,6 +1,7 @@
 from pipeline import Pipe
 import logging
 import json
+import re
 import sys
 import zmq
 
@@ -55,6 +56,59 @@ class ZeroMQInput(Input):
         except: 
             pass
         return msg
+
+class MultilineFileInput(Input):
+    '''
+    read a file line by line, combine lines that look like tracebacks
+    '''
+    def __init__(self,filename=sys.stdin,multiline_regex='^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)'):
+        super(MultilineFileInput, self).__init__()
+        self.file = filename
+        self.multiline_regex = re.compile(multiline_regex)
+        self.multiline_cache = []
+        if isinstance(self.file,file):
+            self.f = self.file
+        else:
+            self.f = open(self.file, 'rb')
+
+    def get_combined_line(self):
+        if not self.multiline_cache:
+            self.prime_cache()
+
+        while True: 
+            # if it looks like a traceback, combine it with what we have
+            line = self.get_single_line()
+            if self.multiline_regex.search(line):
+                self.multiline_cache = '%s%s' % (self.multiline_cache,line)
+            else:
+                combined = ''.join(self.multiline_cache)
+                self.multiline_cache = []
+                self.multiline_cache.append(line)
+                return combined
+
+    def prime_cache(self):
+        while True: 
+            # get a line that does not look like a traceback
+            line = self.get_single_line()
+            # we are dropping content here, because we have nothing to
+            # tie it to.  we have started reading in the middle of a 
+            # traceback.
+            if self.multiline_regex.search(line):
+                continue
+            self.multiline_cache.append(line)
+            return
+
+    def get_single_line(self):
+        line = self.f.readline()
+        if line == '':
+            self.dead = True
+        return line
+
+    def output(self):
+        if self.f:
+            return self.get_combined_line()
+        return None
+ 
 
 class FileInput(Input):
     '''
