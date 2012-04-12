@@ -39,6 +39,14 @@
       </analyzer>
     </fieldType>
 
+    <fieldType name="text_ip" class="solr.TextField" positionIncrementGap="100">
+      <analyzer>
+        <tokenizer class="solr.PathHierarchyTokenizerFactory" delimiter="."/>
+      </analyzer>
+    </fieldType>
+
+
+
     <fieldType name="text" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
@@ -81,6 +89,7 @@
     <dynamicField name="*_d"  type="sdouble" indexed="true"  stored="true"/>
     <dynamicField name="*_dt" type="date"    indexed="true"  stored="true"/>
     <dynamicField name="*_tp" type="text_path" indexed="true" stored="true"/>
+    <dynamicField name="*_ti" type="text_ip" indexed="true" stored="true"/>
     <!-- unindexed string field -->
     <dynamicField name="*_sui"  type="string"  indexed="False"  stored="true"/>
     <!-- multivalued string field -->

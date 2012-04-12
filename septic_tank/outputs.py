@@ -98,11 +98,15 @@ class SOLROutput(Output):
             return None
 
         solrdata = {}
+        # FIX - this needs to be passed in because everyone's config will
+        # be different
         for key in data:
             if 'date' in key:
                 skey = "%s_dt" % key
             elif ('path' in key) or ('uri' in key) or ('url' in key):
                 skey = "%s_tp" % key
+            elif ('ip' in key) or ('host' in key):
+                skey = "%s_ti" % key
             elif 'msg' == key:
                 skey = key
             elif 'id' == key:
