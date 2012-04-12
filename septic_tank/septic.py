@@ -2,7 +2,7 @@
 import logging
 import socket
 from pipeline import Pipeline
-from inputs import FileInput, ZeroMQInput, StdInput
+from inputs import FileInput, ZeroMQInput, StdInput, MultilineFileInput
 from parsers import RegexParser 
 from filters import ZuluDateFilter, RemoveFieldsFilter, GrepFilter, LCFilter, UniqFilter, AddFieldsFilter
 from outputs import STDOutput, JSONOutput, SOLROutput, ZeroMQOutput
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     #zdf = ZuluDateFilter(fields=['date'])
 
     #stdin = StdInput()
-    #i = FileInput('all.access.log')
+    i = FileInput('all.access.log')
     p = RegexParser(use = ['apachelog']) 
     # 29/Mar/2012:02:06:49 -0400
     zdf = ZuluDateFilter(fields=['apache_date'],informat="%d/%b/%Y:%H:%M:%S")
@@ -39,11 +39,14 @@ if __name__ == "__main__":
     solr = SOLROutput('http://localhost:8080/solr/medley')
     zmq_out = ZeroMQOutput()
     zmq_in = ZeroMQInput()
+    mlf = MultilineFileInput(filename='bcvideo.log')
 
     # fix there is a bug in jsout for the all.access.log
-    #pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,stdout])
-    pipeline = Pipeline(pipes = [dw,p,rff,add_server,lcf,zdf,uniq,stdout])
+    #pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,jsout])
+    #pipeline = Pipeline(pipes = [dw,p,rff,add_server,lcf,zdf,uniq,stdout])
     #pipeline = Pipeline(pipes = [dw,stdout])
+    pipeline = Pipeline(pipes = [mlf,stdout])
+    
     for data in pipeline:
         pass 
     

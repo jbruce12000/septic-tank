@@ -76,20 +76,27 @@ class MultilineFileInput(Input):
             self.prime_cache()
 
         while True: 
-            # if it looks like a traceback, combine it with what we have
             line = self.get_single_line()
+            if self.dead:
+                return self.combined(line)        
+            # if it looks like a traceback, combine it with what we have
             if self.multiline_regex.search(line):
                 self.multiline_cache = '%s%s' % (self.multiline_cache,line)
             else:
-                combined = ''.join(self.multiline_cache)
-                self.multiline_cache = []
-                self.multiline_cache.append(line)
-                return combined
+                return self.combined(line)
+
+    def combined(self,line=''):
+        combined = ''.join(self.multiline_cache)
+        self.multiline_cache = []
+        self.multiline_cache.append(line)
+        return combined
 
     def prime_cache(self):
         while True: 
             # get a line that does not look like a traceback
             line = self.get_single_line()
+            if self.dead:
+                return
             # we are dropping content here, because we have nothing to
             # tie it to.  we have started reading in the middle of a 
             # traceback.

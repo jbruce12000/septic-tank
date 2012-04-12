@@ -23,20 +23,22 @@ class Pipeline(object):
             else:
                 b.cache.append(None)
 
-            # done, return what we got from the last pipe
-            if x == len(self.pipes) - 1:
-                logging.debug('end of pipe %s' % type(b))
-                return b.output()
-
             # if the input is dead, so is the pipeline
             if a.dead:
                 self.dead = True
                 return None
+
             # if any pipe in the pipeline returns None, there should be
             # no output, clean up the entire pipeline so we can try again.
             if b.is_empty():
                 self.clean()
                 return None
+
+            # done, return what we got from the last pipe
+            if x == len(self.pipes) - 1:
+                logging.debug('end of pipe %s' % type(b))
+                return b.output()
+
         self.clean()
         return None
 
