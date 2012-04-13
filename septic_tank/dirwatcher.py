@@ -23,22 +23,29 @@ class FileWatcher(object):
         last_lines = integer, 0 by default.  grab the last N lines from
             from a file when first opening it. 
     '''
-    def __init__(self,folder,name,seek_end=True,last_lines=0):
+    def __init__(self,folder,name,seek_end=True,last_lines=0, \
+                 multiline=False,multiline_regex='^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)',testing=False):
         self.name = name
         self.folder = folder
         self.absname = os.path.realpath(os.path.join(self.folder, self.name))
         self.file = None
-        if not self.regular_file():
-            raise
-        self.file = open(self.absname, "r")
-        if seek_end:
-            self.file.seek(0,os.SEEK_END)
-        self.file_id = self.get_file_id()
-        logging.debug('watching file %s' % self.absname)
-        self.line_terminators = ('\n')
-        self.last_lines = last_lines
-        if self.last_lines:
-            self.go_back_n_lines(lines=self.last_lines)
+        self.testing = testing
+        if not self.testing:
+            if not self.regular_file():
+                raise Exception("%s is not a regular file" % self.absname)
+            self.file = open(self.absname, "r")
+            if seek_end:
+                self.file.seek(0,os.SEEK_END)
+            self.file_id = self.get_file_id()
+            logging.debug('watching file %s' % self.absname)
+            self.line_terminators = ('\n')
+            self.last_lines = last_lines
+            if self.last_lines:
+                self.go_back_n_lines(lines=self.last_lines)
+            if self.multiline:
+                self.multiline_regex = re.compile(multiline_regex)
+                self.multiline_cache = []
+
 
     def reopen(self):
         self.file.close()
@@ -55,8 +62,37 @@ class FileWatcher(object):
             return True
         return False
 
+    def combine_lines(self,lines=None,regex=None):
+        '''
+        this takes a list of lines and a regex.  those lines that match
+        regex are concatenated with the previous line and the potentially
+        shorter list is returned.
+        '''
+        if lines is None:
+            lines = self.file.readlines()
+        if regex is None:
+            regex = self.multiline_regex
+        combined = []
+        x = 0
+        for line in lines:
+            if regex.search(line):
+                if x > 0:
+                    combined[x-1] = '%s%s' % (combined[x-1],line)
+                else:
+                    # we are dropping content here, because we have nothing to
+                    # tie it to.  we have started reading in the middle of a 
+                    # traceback.
+                    continue
+            else:
+                combined.append(line)
+                x += 1
+        return combined    
+                 
+
     def readfile(self):
         lines = self.file.readlines()
+        if self.multiline:
+            lines = self.combine_lines(lines=lines)
         output = []
         for line in lines:
             entry = {}
@@ -88,9 +124,9 @@ class FileWatcher(object):
         return False
 
     def __del__(self):
-        if self.file:
+        if hasattr(self,'file') and self.file:
             self.file.close()
-        logging.debug('file closed %s' % self.absname)
+            logging.debug('file closed %s' % self.absname)
 
     def go_back_n_lines(self,lines=0):
         '''
@@ -98,7 +134,6 @@ class FileWatcher(object):
         are not enough lines.  this seeks to the end of the file first.
         '''
         logging.debug('rewinding file back %d lines %s' % (lines,self.absname))
-        #import pdb; pdb.set_trace()
         self.file.seek(0,os.SEEK_END)
         pos = self.file.tell()
         n = lines + 2
@@ -115,7 +150,6 @@ class FileWatcher(object):
                 break
         pos +=2
         self.file.seek(pos)
-        #import pdb; pdb.set_trace()
         return 
 
 class DirWatcher(Input):
@@ -157,7 +191,6 @@ class DirWatcher(Input):
         self.last_lines = last_lines
         self.init_files()
         self.cache = []
-      
 
     def __del__(self):
         self.files_map.clear()
@@ -195,7 +228,6 @@ class DirWatcher(Input):
             if absname in self.files_map:
                 try:
                     lines = self.files_map[absname].readfile()
-                    #import pdb; pdb.set_trace()
                     if lines:
                         for line in lines:
                             self.cache.append(line) 

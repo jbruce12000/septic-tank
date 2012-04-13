@@ -46,7 +46,8 @@ if __name__ == "__main__":
     #pipeline = Pipeline(pipes = [dw,p,rff,add_server,lcf,zdf,uniq,stdout])
     #pipeline = Pipeline(pipes = [dw,stdout])
     pipeline = Pipeline(pipes = [mlf,stdout])
-    
+   
+ 
     for data in pipeline:
         pass 
     
