@@ -10,14 +10,11 @@ class PipeTestCase(TestCase):
 
     def test_empty(self):
         self.assertEqual(self.p1.is_empty(), True)
-        self.p1.cache = [ None ]
+        self.p1.pipe_cache = [ None ]
         self.assertEqual(self.p1.is_empty(), True)
-        # not sure what I want this to do...
-        # self.p1.cache = [ None, 'blah' ]
-        # self.assertEqual(self.p1.is_empty(), True)
 
     def test_output(self):
-        self.p1.cache = [1,2,3]
+        self.p1.pipe_cache = [1,2,3]
         self.assertEqual(self.p1.output(),1)
         self.assertEqual(self.p1.output(),2)
         self.assertEqual(self.p1.output(),3)
@@ -35,7 +32,7 @@ class PipelineTestCase(TestCase):
 
     def test_iteration(self):
         p1 = Pipe(name='p1')
-        p1.cache = ['ok']
+        p1.pipe_cache = ['ok']
         p2 = Pipe(name='p2')
         p3 = Pipe(name='p3')
         pline = Pipeline(pipes=[p1,p2,p3])

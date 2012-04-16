@@ -19,9 +19,9 @@ class Pipeline(object):
             # somewhere in the middle of the pipeline
             output = a.output()
             if output:
-                b.cache.append(b.execute(output))
+                b.pipe_cache.append(b.execute(output))
             else:
-                b.cache.append(None)
+                b.pipe_cache.append(None)
 
             # if the input is dead, so is the pipeline
             if a.dead:
@@ -56,11 +56,11 @@ class Pipeline(object):
 
     def clean(self):
         for pipe in self.pipes:
-            pipe.cache = []
+            pipe.pipe_cache = []
 
 class Pipe(object):
     def __init__(self,name=''):
-        self.cache = []
+        self.pipe_cache = []
         self.dead = False
         self.name = name
 
@@ -68,16 +68,16 @@ class Pipe(object):
         return self.name
 
     def is_empty(self):
-        if len(self.cache) == 0:
+        if len(self.pipe_cache) == 0:
             return True
-        for item in self.cache:
+        for item in self.pipe_cache:
             if item:
                 return False
         return True
 
     def output(self):
-        if self.cache:
-            return self.cache.pop(0)
+        if self.pipe_cache:
+            return self.pipe_cache.pop(0)
         return None
 
     # fix = this should be an iterator. powered by a generator?
