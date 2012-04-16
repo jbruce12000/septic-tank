@@ -75,7 +75,7 @@ class MultilineFileInput(Input):
         if not self.multiline_cache:
             self.prime_cache()
 
-        while True: 
+        while True:
             line = self.get_single_line()
             if self.dead:
                 return self.combined(line)        

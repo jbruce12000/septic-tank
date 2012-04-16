@@ -62,7 +62,8 @@ class RegexParser(Parser):
             if key not in self.expanded.regs:
                 raise Exception, 'key %s given in use is not supplied in regs' % key
             logging.debug('compiling regex %s = %s' % (key,self.expanded.regs[key]))
-            self.compiled[key] = re.compile(self.expanded.regs[key])
+            # need re.DOTALL to match \n for multiline
+            self.compiled[key] = re.compile(self.expanded.regs[key],re.DOTALL)
 
     def execute(self,data):
         '''

@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     #stdin = StdInput()
     i = FileInput('all.access.log')
-    p = RegexParser(use = ['apachelog']) 
+    p = RegexParser(use = ['celerylog']) 
     # 29/Mar/2012:02:06:49 -0400
     zdf = ZuluDateFilter(fields=['apache_date'],informat="%d/%b/%Y:%H:%M:%S")
 
@@ -46,8 +46,8 @@ if __name__ == "__main__":
     # fix there is a bug in jsout for the all.access.log
     #pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,jsout])
     #pipeline = Pipeline(pipes = [dw,p,rff,add_server,lcf,zdf,uniq,stdout])
-    pipeline = Pipeline(pipes = [dw,stdout])
-    #pipeline = Pipeline(pipes = [mlf,stdout])
+    #pipeline = Pipeline(pipes = [dw,stdout])
+    pipeline = Pipeline(pipes = [mlf,p,jsout])
  
     for data in pipeline:
         pass 
