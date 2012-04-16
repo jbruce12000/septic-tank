@@ -1,9 +1,6 @@
 CODE:
 
 - json input
-- multiline input, or make current input multiline
-  could make it an aggregator that just goes after the input to aggregate
-  lines.
 - all filters should be able to read either a string or a dict
 
 DOCS:
@@ -15,3 +12,6 @@ TESTS:
 
 EXPLORE:
 - pypy - might be a huge speed improvement for the centralized processor
+  * failed to get a virtualenv running with pypy.  pyzmq_static would not
+    compile properly under pypy
+- using mlt in searching for similar records in solr
