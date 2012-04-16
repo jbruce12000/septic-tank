@@ -49,11 +49,12 @@ regs = {
     # celery logs
     #[2012-04-09 23:02:08,948: INFO/PoolWorker-11] medley.videos.tasks.brightcove.UpdateBrightcoveVideos[bc9513e6-ae97-4172-8c97-0af7b3a4e369]:
     #[2012-04-09 23:02:08,951: WARNING/PoolWorker-11] Insufficient settings:www.prod.coxohiomedia.com:brightcove_account_id is missing, but required
+    #[2012-04-09 23:01:35,042: ERROR/PoolWorker-11] Failed to import thumbnail
     "poolworker" : "PoolWorker-(?P<poolworker>\d+)",
     "celery_task" : "(?P<celery_task>[A-Za-z.]+)",
     "celery_hash" : "\[(?P<celery_hash>[a-f0-9-]+)\]\:",
     "celery_msg" : "(?P<celery_msg>.*)",
-    "celerylog" : "\[{{yyyy-mm-dd hh:mm:ss,ms}}: {{level}}/{{poolworker}}\] ({{celery_task}}{{celery_hash}}|) {{celery_msg}}"
+    "celerylog" : "\[{{yyyy-mm-dd hh:mm:ss,ms}}: {{level}}/{{poolworker}}\] ({{celery_task}}{{celery_hash}}|)\s*{{celery_msg}}"
     }
 
 

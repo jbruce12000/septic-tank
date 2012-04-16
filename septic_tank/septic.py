@@ -41,13 +41,15 @@ if __name__ == "__main__":
     solr = SOLROutput('http://localhost:8080/solr/medley')
     zmq_out = ZeroMQOutput()
     zmq_in = ZeroMQInput()
-    mlf = MultilineFileInput(filename='bcvideo.log')
+    mlf = MultilineFileInput(filename='./logs/stuff_2_add')
 
     # fix there is a bug in jsout for the all.access.log
     #pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,jsout])
     #pipeline = Pipeline(pipes = [dw,p,rff,add_server,lcf,zdf,uniq,stdout])
     #pipeline = Pipeline(pipes = [dw,stdout])
-    pipeline = Pipeline(pipes = [dw,p,stdout])
+    
+    #pipeline = Pipeline(pipes = [dw,p,stdout])
+    pipeline = Pipeline(pipes = [mlf,p,stdout])
  
     for data in pipeline:
         pass 

@@ -33,7 +33,6 @@ class ZeroMQInput(Input):
 
     def output(self):
         try:
-            #import pdb; pdb.set_trace()
             msg = self.socket.recv()
             logging.debug('zeromq msg received: %s' % msg)
             # must send something to make zeromq happy
@@ -78,6 +77,7 @@ class MultilineFileInput(Input):
         while True:
             line = self.get_single_line()
             if self.dead:
+                # FIX - this is not returning the last record.
                 return self.combined(line)        
             # if it looks like a traceback, combine it with what we have
             if self.multiline_regex.search(line):
