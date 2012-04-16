@@ -21,15 +21,24 @@ class FileWatcher(object):
             if this is set to False.
      
         last_lines = integer, 0 by default.  grab the last N lines from
-            from a file when first opening it. 
+            from a file when first opening it.
+
+        multiline = boolean, false by default. append lines matching the 
+            multiline regex into the previous line.
+
+        multiline_regex = string, a regular expression defining what lines
+            get appended to the previous line.
+
+        testing = boolean, false by default. used to run tests.
     '''
-    def __init__(self,folder,name,seek_end=True,last_lines=0, \
-                 multiline=False,multiline_regex='^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)',testing=False):
+    def __init__(self,folder,name,seek_end=True,last_lines=0,multiline=False,multiline_regex='^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)',testing=False):
         self.name = name
         self.folder = folder
         self.absname = os.path.realpath(os.path.join(self.folder, self.name))
         self.file = None
         self.testing = testing
+        self.multiline = multiline
+        #import pdb; pdb.set_trace()
         if not self.testing:
             if not self.regular_file():
                 raise Exception("%s is not a regular file" % self.absname)
@@ -173,12 +182,18 @@ class DirWatcher(Input):
             if the process is stopped and you want to get old log data through
             the pipeline.
 
+        multiline = boolean, false by default. append lines matching the 
+            multiline regex into the previous line.
+
+        multiline_regex = string, a regular expression defining what lines
+            get appended to the previous line.
+
     outputs
     
        dict like { 'msg' : 'line of data from file', 
                    'file' : '/path/to/file' }
     '''
-    def __init__(self, folder, regex='.*\.log', sleepfor=5,last_lines=0):
+    def __init__(self, folder, regex='.*\.log', sleepfor=5,last_lines=0,multiline=False,multiline_regex='^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)'):
         '''
         '''
         super(DirWatcher, self).__init__()
@@ -189,11 +204,14 @@ class DirWatcher(Input):
         assert os.path.isdir(self.folder), "%s does not exist" \
                                             % self.folder
         self.last_lines = last_lines
+        self.multiline = multiline
+        self.multiline_regex = multiline_regex
         self.init_files()
         self.cache = []
 
     def __del__(self):
-        self.files_map.clear()
+        if hasattr(self,'files_map') and self.files_map:
+            self.files_map.clear()
 
     def __iter__(self):
         return self
@@ -216,7 +234,9 @@ class DirWatcher(Input):
             try:
                 # add a watcher for each file and seek to the end
                 self.files_map[absname] = FileWatcher(folder=self.folder,\
-                    name=name,seek_end=True,last_lines=self.last_lines)
+                    name=name,seek_end=True,last_lines=self.last_lines,\
+                    multiline=self.multiline,\
+                    multiline_regex=self.multiline_regex)
             except Exception, err:
                 pass 
 
