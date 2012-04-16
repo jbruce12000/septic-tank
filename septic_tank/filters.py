@@ -1,4 +1,5 @@
 from pipeline import Pipe
+import json
 import logging
 import re
 import time
@@ -25,15 +26,9 @@ class UniqFilter(Filter):
         if 'id' in data:
             del data['id']
         m = hashlib.md5()
-        m.update(self.flatten_dict(data))
+        m.update(json.dumps(data,sort_keys=True))
         data['id'] = m.hexdigest() 
         return data
-
-    def flatten_dict(self,mydict):
-        output = ''
-        for key in sorted(mydict.iterkeys()):
-            output = "%s%s%s" % (output, key, mydict[key])
-        return output
 
 class ZuluDateFilter(Filter):
     '''
