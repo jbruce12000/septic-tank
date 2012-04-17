@@ -34,7 +34,7 @@ if __name__ == "__main__":
     rff = RemoveFieldsFilter(fields = ['msg'])
     add_server = AddFieldsFilter({'server' : socket.gethostname()})
     gf = GrepFilter(regex='459184')
-    lcf = LCFilter()
+    #lcf = LCFilter()
     #uniq = UniqFilter()
     stdout = STDOutput()
     jsout = JSONOutput(sort_keys=True, indent=2)
@@ -42,9 +42,10 @@ if __name__ == "__main__":
     zmq_in = ZeroMQInput()
    
  
-    mlf = MultilineFileInput(filename='./bcvideo.log',
+    mlf = MultilineFileInput(filename='./celery-quick.log',
         multiline_regex = '^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError|DETAIL)')
     p = RegexParser(use = ['celerylog']) 
+    lcf = LCFilter()
     zdf = ZuluDateFilter(fields=['date'])
     uniq = UniqFilter()
     solr_typemap = { 'date'        : '_dt',
@@ -53,13 +54,12 @@ if __name__ == "__main__":
         typemap=solr_typemap,
         commitrate=1000)
 
-    # fix there is a bug in jsout for the all.access.log
     #pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,jsout])
     #pipeline = Pipeline(pipes = [dw,p,rff,add_server,lcf,zdf,uniq,stdout])
     #pipeline = Pipeline(pipes = [dw,stdout])
     
     #pipeline = Pipeline(pipes = [mlf,p,stdout])
-    pipeline = Pipeline(pipes = [mlf,p,zdf,uniq,solr])
+    pipeline = Pipeline(pipes = [mlf,p,lcf,zdf,uniq,solr])
  
     for data in pipeline:
         pass 

@@ -5,6 +5,8 @@ import logging
 import sys
 import zmq
 
+import pdb
+
 class Output(Pipe):
     def data_invalid(self,data):
         if 'type' not in data:
@@ -114,18 +116,27 @@ class SOLROutput(Output):
 
         # commit every once and a while
         if(self.commityet >= self.commitrate):
-            logging.debug('adding %d docs to solr' % self.commityet)
-            try:
-                self.conn.add(self.solrcache)
-                self.commityet = 0
-                self.solrcache = []
-            except Exception, err:
-                # if solr is down, this fails at a rate of about 1/s until
-                # solr comes back up.  the backlog in the cache then gets
-                # written.
-                logging.error('solr cache size: %d' % len(self.solrcache))
-                logging.error('solr add error: %s' % str(err))
-                return None 
+            self.commit_to_solr()
 
         # required at end of pipeline
         return data
+
+    def commit_to_solr(self):
+        logging.debug('adding %d docs to solr' % self.commityet)
+        try:
+            self.conn.add(self.solrcache)
+            self.commityet = 0
+            self.solrcache = []
+        except Exception, err:
+            # if solr is down, this fails at a rate of about 1/s until
+            # solr comes back up.  the backlog in the cache then gets
+            # written.
+            pdb.set_trace()
+            logging.error('solr cache size: %d' % len(self.solrcache))
+            logging.error('solr add error: %s' % str(err))
+            return None 
+
+    def __del__(self):
+        self.commitrate = 0
+        logging.debug('shutting down, clearing cache to solr')
+        self.commit_to_solr()
