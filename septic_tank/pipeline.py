@@ -24,6 +24,7 @@ class Pipeline(object):
                 b.pipe_cache.append(None)
 
             # if the input is dead, so is the pipeline
+            # FIX - this needs to flush the output
             if a.dead:
                 self.dead = True
                 return None

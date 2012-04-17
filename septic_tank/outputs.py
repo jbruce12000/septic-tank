@@ -83,13 +83,14 @@ class ZeroMQOutput(Output):
 
 
 class SOLROutput(Output):
-    def __init__(self,solrurl,commitrate=10000):
+    def __init__(self,solrurl,commitrate=10000,typemap={}):
         super(SOLROutput, self).__init__()
         self.solrurl = solrurl
         self.conn = Solr(self.solrurl)
         self.commitrate = commitrate
         self.solrcache = []
         self.commityet = 0
+        self.typemap = typemap
 
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
@@ -98,18 +99,12 @@ class SOLROutput(Output):
             return None
 
         solrdata = {}
-        # FIX - this needs to be passed in because everyone's config will
-        # be different
         for key in data:
-            if 'date' in key:
-                skey = "%s_dt" % key
-            elif ('path' in key) or ('uri' in key) or ('url' in key):
-                skey = "%s_tp" % key
-            elif ('ip' in key) or ('host' in key):
-                skey = "%s_ti" % key
-            elif 'msg' == key:
+            if key in self.typemap:
+                skey = "%s%s" % (key,self.typemap[key])
+            elif key == 'id':
                 skey = key
-            elif 'id' == key:
+            elif key == 'msg':
                 skey = key
             else:
                 skey = "%s_t" % key

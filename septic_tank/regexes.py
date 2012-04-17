@@ -50,7 +50,8 @@ regs = {
     #[2012-04-09 23:02:08,948: INFO/PoolWorker-11] medley.videos.tasks.brightcove.UpdateBrightcoveVideos[bc9513e6-ae97-4172-8c97-0af7b3a4e369]:
     #[2012-04-09 23:02:08,951: WARNING/PoolWorker-11] Insufficient settings:www.prod.coxohiomedia.com:brightcove_account_id is missing, but required
     #[2012-04-09 23:01:35,042: ERROR/PoolWorker-11] Failed to import thumbnail
-    "poolworker" : "PoolWorker-(?P<poolworker>\d+)",
+    #[2012-04-16 19:50:38,403: INFO/MainProcess] Got task from broker: medley.ellington_overrides.search.tasks.HaystackUpdateTask[c974aa00-edd5-427d-81f4-98bc6db7d673] eta:[2012-04-16 15:51:08.390622]
+    "poolworker" : "(PoolWorker-(?P<poolworker>\d+)|MainProcess)",
     "celery_task" : "(?P<celery_task>[A-Za-z.]+)",
     "celery_hash" : "\[(?P<celery_hash>[a-f0-9-]+)\]\:",
     "celery_msg" : "(?P<celery_msg>.*)",

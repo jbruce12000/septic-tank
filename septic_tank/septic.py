@@ -25,31 +25,41 @@ if __name__ == "__main__":
     i = FileInput('all.access.log')
     p = RegexParser(use = ['celerylog']) 
     # 29/Mar/2012:02:06:49 -0400
-    zdf = ZuluDateFilter(fields=['apache_date'],informat="%d/%b/%Y:%H:%M:%S")
+    #zdf = ZuluDateFilter(fields=['apache_date'],informat="%d/%b/%Y:%H:%M:%S")
 
     dw = DirWatcher(folder = '/home/jbruce/septic_tank/septic_tank/logs',
                     multiline = True,
-                    multiline_regex = '^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)') 
+                    multiline_regex = '^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError|DETAIL)') 
 
     rff = RemoveFieldsFilter(fields = ['msg'])
     add_server = AddFieldsFilter({'server' : socket.gethostname()})
     gf = GrepFilter(regex='459184')
     lcf = LCFilter()
-    uniq = UniqFilter()
+    #uniq = UniqFilter()
     stdout = STDOutput()
     jsout = JSONOutput(sort_keys=True, indent=2)
-    solr = SOLROutput('http://localhost:8080/solr/medley')
     zmq_out = ZeroMQOutput()
     zmq_in = ZeroMQInput()
-    mlf = MultilineFileInput(filename='./logs/stuff_2_add')
+   
+ 
+    mlf = MultilineFileInput(filename='./bcvideo.log',
+        multiline_regex = '^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError|DETAIL)')
+    p = RegexParser(use = ['celerylog']) 
+    zdf = ZuluDateFilter(fields=['date'])
+    uniq = UniqFilter()
+    solr_typemap = { 'date'        : '_dt',
+                     'celery_task' : '_ti' }
+    solr = SOLROutput('http://localhost:8080/solr/medley',
+        typemap=solr_typemap,
+        commitrate=1000)
 
     # fix there is a bug in jsout for the all.access.log
     #pipeline = Pipeline(pipes = [i,p,lcf,zdf,uniq,jsout])
     #pipeline = Pipeline(pipes = [dw,p,rff,add_server,lcf,zdf,uniq,stdout])
     #pipeline = Pipeline(pipes = [dw,stdout])
     
-    pipeline = Pipeline(pipes = [dw,p,stdout])
     #pipeline = Pipeline(pipes = [mlf,p,stdout])
+    pipeline = Pipeline(pipes = [mlf,p,zdf,uniq,solr])
  
     for data in pipeline:
         pass 
