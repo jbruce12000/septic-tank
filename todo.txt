@@ -2,6 +2,7 @@ CODE:
 
 - json input
 - all filters should be able to read either a string or a dict
+- flush outputs when input is dead
 
 DOCS:
  
