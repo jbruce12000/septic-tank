@@ -5,8 +5,6 @@ import logging
 import sys
 import zmq
 
-import pdb
-
 class Output(Pipe):
     def data_invalid(self,data):
         if 'type' not in data:
@@ -93,6 +91,10 @@ class SOLROutput(Output):
         self.solrcache = []
         self.commityet = 0
         self.typemap = typemap
+        # post 0 docs to solr:
+        # 1. verify we can post to solr
+        # 2. load libs for __del__
+        self.commit_to_solr()
 
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
@@ -131,7 +133,6 @@ class SOLROutput(Output):
             # if solr is down, this fails at a rate of about 1/s until
             # solr comes back up.  the backlog in the cache then gets
             # written.
-            pdb.set_trace()
             logging.error('solr cache size: %d' % len(self.solrcache))
             logging.error('solr add error: %s' % str(err))
             return None 
