@@ -95,7 +95,7 @@
     <!-- multivalued string field -->
     <dynamicField name="*_smu"  type="string"  indexed="False"  stored="true" multiValued="true"/>
 
-    <field name="msg" type="text" indexed="true" stored="false" multiValued="true"/>
+    <field name="msg" type="text" indexed="true" stored="true" multiValued="true"/>
     <field name="id"      type="string"   indexed="true"  stored="true"  multiValued="false" required="false"/>
   </fields>
 

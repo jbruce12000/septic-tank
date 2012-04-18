@@ -42,7 +42,7 @@ if __name__ == "__main__":
     zmq_in = ZeroMQInput()
    
  
-    mlf = MultilineFileInput(filename='./celery-quick.log',
+    mlf = MultilineFileInput(filename='./bcvideo.log',
         multiline_regex = '^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError|DETAIL)')
     p = RegexParser(use = ['celerylog']) 
     lcf = LCFilter()
