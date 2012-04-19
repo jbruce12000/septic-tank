@@ -3,6 +3,8 @@ CODE:
 - json input
 - all filters should be able to read either a string or a dict
 - flush outputs when input is dead, bug with celery logs on this
+- ZuluDateFilter does not handle failure.  should it just return None if
+  it cannot convert?
 
 DOCS:
  
