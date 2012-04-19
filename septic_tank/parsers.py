@@ -71,10 +71,10 @@ class CSVParser(Parser):
             dict = map of self.fieldnames to parsed fields
         '''
         try:
-            # quotes cause problems with newlines in multiline input
-            data = re.sub("['\"]",'',data)
             # FIX - creating and destroying objects is slow, limits
             # this parser to 1000 recs/s.  
+            #import pdb;pdb.set_trace()
+            #FIX this is coming in with a "[" before the first date
             reader = csv.DictReader([data],fieldnames=self.fieldnames,
                 **self.kwargs)
             output = reader.next()

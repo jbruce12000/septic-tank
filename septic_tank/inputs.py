@@ -64,7 +64,7 @@ class MultilineFileInput(Input):
         super(MultilineFileInput, self).__init__()
         self.file = filename
         self.multiline_regex = re.compile(multiline_regex)
-        self.multiline_cache = []
+        self.multiline_cache = ''
         if isinstance(self.file,file):
             self.f = self.file
         else:
@@ -87,8 +87,7 @@ class MultilineFileInput(Input):
 
     def combined(self,line=''):
         combined = ''.join(self.multiline_cache)
-        self.multiline_cache = []
-        self.multiline_cache.append(line)
+        self.multiline_cache = line
         return combined
 
     def prime_cache(self):
@@ -102,7 +101,7 @@ class MultilineFileInput(Input):
             # traceback.
             if self.multiline_regex.search(line):
                 continue
-            self.multiline_cache.append(line)
+            self.multiline_cache = "%s%s" % (self.multiline_cache,line)
             return
 
     def get_single_line(self):
