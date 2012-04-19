@@ -22,6 +22,10 @@ class CSVParser(Parser):
         parse_field - string, default 'msg' - if execute is passed a dict,
             this is the key in that dict to parse
         kwargs - keyword arguments that get passed directly to csv.DictReader
+
+    notes
+    
+        1. all quotes are removed from data  
     '''
     def __init__(self,record_type,fieldnames=[],parse_field='msg',**kwargs):
         super(CSVParser, self).__init__()
@@ -67,11 +71,19 @@ class CSVParser(Parser):
             dict = map of self.fieldnames to parsed fields
         '''
         try:
+            # quotes cause problems with newlines in multiline input
+            data = re.sub("['\"]",'',data)
+            # FIX - creating and destroying objects is slow, limits
+            # this parser to 1000 recs/s.  
             reader = csv.DictReader([data],fieldnames=self.fieldnames,
                 **self.kwargs)
             output = reader.next()
             if isinstance(output,dict):
                 output['type'] = self.record_type
+                # csv module appends shit it does not have filednames for to
+                # None. lets remove those.
+                if None in output:
+                    del output[None]
                 return output
             return None
         except csv.Error, e:
