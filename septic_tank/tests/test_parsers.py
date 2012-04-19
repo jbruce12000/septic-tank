@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import unittest
 from unittest import TestCase
-from parsers import RegexExpander, RegexParser
+from parsers import RegexExpander, RegexParser, CSVParser
 import re
 
 class RegexExpanderTestCase(TestCase):
@@ -46,6 +46,38 @@ class RegexExpanderTestCase(TestCase):
             }
         r = RegexExpander(regs=regs)
         self.assertEqual(r.regs['one'],'this is a {long} string')
+
+
+class CSVParserTestCase(TestCase):
+
+    def setUp(self):
+        self.parser = CSVParser(fieldnames=['f1','f2','f3','f4'])
+
+    def test_execute_string(self):
+        data = 'this,is,a,test'
+        output = self.parser.execute(data)
+        self.assertEqual(output['f1'],'this')
+        self.assertEqual(output['f2'],'is')
+        self.assertEqual(output['f3'],'a')
+        self.assertEqual(output['f4'],'test')
+  
+    def test_execute_dict(self):
+        data = { 'msg' : 'this,is,a,test' }
+        output = self.parser.execute(data)
+        self.assertEqual(output['f1'],'this')
+        self.assertEqual(output['f2'],'is')
+        self.assertEqual(output['f3'],'a')
+        self.assertEqual(output['f4'],'test')
+
+    def test_execute_dict_with_parse_field(self):
+        self.parser = CSVParser(fieldnames=['f1','f2','f3','f4'],
+            parse_field='myfield')
+        data = { 'myfield' : 'this,is,a,test' }
+        output = self.parser.execute(data)
+        self.assertEqual(output['f1'],'this')
+        self.assertEqual(output['f2'],'is')
+        self.assertEqual(output['f3'],'a')
+
 
 class RegexParserTestCase(TestCase):
 

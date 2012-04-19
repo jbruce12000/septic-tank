@@ -1,6 +1,7 @@
 from pipeline import Pipe
 from regexes import regs
 from collections import defaultdict
+import csv
 import logging
 import re
 
@@ -8,6 +9,66 @@ class Parser(Pipe):
 
     def __init__(self):
         super(Parser, self).__init__()
+
+class CSVParser(Parser):
+    '''
+    csv parser
+ 
+    inputs
+
+        fieldnames - array, required, names of fields in csv file
+        parse_field - string, default 'msg' - if execute is passed a dict,
+            this is the key in that dict to parse
+    '''
+    def __init__(self,fieldnames=[],parse_field='msg'):
+        super(CSVParser, self).__init__()
+        # fix - add kwargs here to be passed to csvreader
+        self.fieldnames = fieldnames
+        self.parse_field = parse_field
+
+    def execute(self,data):
+        '''
+        parse a single line of csv data
+
+        inputs
+
+            data - either a string or a dict - if a string, parse it - if a
+                dict, parse the field based on self.parse_field.
+        
+        outputs
+
+            a dict mapping self.fieldnames to values parsed from data or None
+                if parsing fails.
+       
+
+        '''
+        if isinstance(data,str) or isinstance(data,unicode):
+            return self.parse(data)
+        if isinstance(data,dict):
+            if self.parse_field in data:
+                return self.parse(data[self.parse_field])
+        return None
+                    
+    def parse(self,data):
+        '''
+        parse a csv string
+
+        input
+
+            data = single line string containing csv 
+
+        output
+
+            dict = map of self.fieldnames to parsed fields
+        '''
+        try:
+            reader = csv.DictReader([data],fieldnames=self.fieldnames)
+            return reader.next()
+        except csv.Error, e:
+            logging.error('csv parse error: %s',str(e))
+        return None
+        
+
 
 class RegexExpander(object):
     '''
