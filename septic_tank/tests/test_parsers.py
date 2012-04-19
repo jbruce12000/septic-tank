@@ -51,11 +51,16 @@ class RegexExpanderTestCase(TestCase):
 class CSVParserTestCase(TestCase):
 
     def setUp(self):
-        self.parser = CSVParser(fieldnames=['f1','f2','f3','f4'])
+        self.parser = CSVParser(fieldnames=['f1','f2','f3','f4'],
+            record_type='postgres')
+
+    def test_no_record_type(self):
+        pass
 
     def test_execute_string(self):
         data = 'this,is,a,test'
         output = self.parser.execute(data)
+        self.assertEqual(output['type'],'postgres')
         self.assertEqual(output['f1'],'this')
         self.assertEqual(output['f2'],'is')
         self.assertEqual(output['f3'],'a')
@@ -71,13 +76,21 @@ class CSVParserTestCase(TestCase):
 
     def test_execute_dict_with_parse_field(self):
         self.parser = CSVParser(fieldnames=['f1','f2','f3','f4'],
-            parse_field='myfield')
+            record_type='postgres',parse_field='myfield')
         data = { 'myfield' : 'this,is,a,test' }
         output = self.parser.execute(data)
         self.assertEqual(output['f1'],'this')
         self.assertEqual(output['f2'],'is')
         self.assertEqual(output['f3'],'a')
 
+    def test_parser_kwargs(self):
+        self.parser = CSVParser(fieldnames=['f1','f2','f3','f4'],
+            record_type='postgres',delimiter='-')
+        data = 'this-is-a-test'
+        output = self.parser.execute(data)
+        self.assertEqual(output['f1'],'this')
+        self.assertEqual(output['f2'],'is')
+        self.assertEqual(output['f3'],'a')
 
 class RegexParserTestCase(TestCase):
 

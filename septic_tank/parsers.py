@@ -17,14 +17,19 @@ class CSVParser(Parser):
     inputs
 
         fieldnames - array, required, names of fields in csv file
+        record_type - string, required, added as the value for the 'type'
+            key for every call to parse.
         parse_field - string, default 'msg' - if execute is passed a dict,
             this is the key in that dict to parse
+        kwargs - keyword arguments that get passed directly to csv.DictReader
     '''
-    def __init__(self,fieldnames=[],parse_field='msg'):
+    def __init__(self,record_type,fieldnames=[],parse_field='msg',**kwargs):
         super(CSVParser, self).__init__()
         # fix - add kwargs here to be passed to csvreader
         self.fieldnames = fieldnames
         self.parse_field = parse_field
+        self.kwargs = kwargs
+        self.record_type = record_type
 
     def execute(self,data):
         '''
@@ -62,8 +67,13 @@ class CSVParser(Parser):
             dict = map of self.fieldnames to parsed fields
         '''
         try:
-            reader = csv.DictReader([data],fieldnames=self.fieldnames)
-            return reader.next()
+            reader = csv.DictReader([data],fieldnames=self.fieldnames,
+                **self.kwargs)
+            output = reader.next()
+            if isinstance(output,dict):
+                output['type'] = self.record_type
+                return output
+            return None
         except csv.Error, e:
             logging.error('csv parse error: %s',str(e))
         return None
