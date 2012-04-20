@@ -59,12 +59,19 @@ class ZeroMQInput(Input):
 class MultilineFileInput(Input):
     '''
     read a file line by line, combine lines that look like tracebacks
+
+    inputs
+
+        reverse = boolen, default False, reverses the regular expression 
+            similar to grep -v
+             
     '''
-    def __init__(self,filename=sys.stdin,multiline_regex='^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)'):
+    def __init__(self,filename=sys.stdin,multiline_regex='^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)', reverse=False):
         super(MultilineFileInput, self).__init__()
         self.file = filename
         self.multiline_regex = re.compile(multiline_regex)
         self.multiline_cache = ''
+        self.reverse = reverse
         if isinstance(self.file,file):
             self.f = self.file
         else:
@@ -80,10 +87,16 @@ class MultilineFileInput(Input):
                 # FIX - this is not returning the last record.
                 return self.combined(line)        
             # if it looks like a traceback, combine it with what we have
-            if self.multiline_regex.search(line):
-                self.multiline_cache = '%s%s' % (self.multiline_cache,line)
+            if self.reverse:
+                if self.multiline_regex.search(line):
+                    return self.combined(line)
+                else:
+                    self.multiline_cache = '%s%s' % (self.multiline_cache,line)
             else:
-                return self.combined(line)
+                if self.multiline_regex.search(line):
+                    self.multiline_cache = '%s%s' % (self.multiline_cache,line)
+                else:
+                    return self.combined(line)
 
     def combined(self,line=''):
         combined = ''.join(self.multiline_cache)
@@ -99,10 +112,16 @@ class MultilineFileInput(Input):
             # we are dropping content here, because we have nothing to
             # tie it to.  we have started reading in the middle of a 
             # traceback.
-            if self.multiline_regex.search(line):
+            if self.reverse:
+                if self.multiline_regex.search(line):
+                    self.multiline_cache = "%s%s" % (self.multiline_cache,line)
+                    return
                 continue
-            self.multiline_cache = "%s%s" % (self.multiline_cache,line)
-            return
+            else:
+                if self.multiline_regex.search(line):
+                    continue
+                self.multiline_cache = "%s%s" % (self.multiline_cache,line)
+                return
 
     def get_single_line(self):
         line = self.f.readline()
