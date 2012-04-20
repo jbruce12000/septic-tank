@@ -72,15 +72,14 @@ class CSVParser(Parser):
         '''
         try:
             # FIX - creating and destroying objects is slow, limits
-            # this parser to 1000 recs/s.  
-            #import pdb;pdb.set_trace()
-            #FIX this is coming in with a "[" before the first date
+            # this parser to 1000 recs/s.  self.reader.reader is 400ms
+            # faster on 18k recs.  not enough to be worth it
             reader = csv.DictReader([data],fieldnames=self.fieldnames,
                 **self.kwargs)
             output = reader.next()
             if isinstance(output,dict):
                 output['type'] = self.record_type
-                # csv module appends shit it does not have filednames for to
+                # csv module appends shit it does not have fieldnames for to
                 # None. lets remove those.
                 if None in output:
                     del output[None]
