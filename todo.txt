@@ -5,6 +5,7 @@ CODE:
 - flush outputs when input is dead, bug with celery logs on this
 - ZuluDateFilter does not handle failure.  should it just return None if
   it cannot convert?
+- FileWatcher needs to have a reverse for multiline_regex
 
 DOCS:
  
