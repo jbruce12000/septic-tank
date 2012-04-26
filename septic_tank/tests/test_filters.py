@@ -34,6 +34,13 @@ class UniqFilterTestCase(TestCase):
         # does not change the hash
         self.assertEqual(self.uf.execute(self.data)['id'],hashed)
 
+    def test_execute_ignore_fields(self):
+        self.uf = UniqFilter(ignore=['key3','blah'])
+        self.data2 = { 'key1' : 'val1', 'key2' : 'val2'}
+        self.uf2 = UniqFilter()
+        self.assertEqual(self.uf.execute(self.data)['id'],
+                         self.uf2.execute(self.data2)['id'])
+
 class LCFilterTestCase(TestCase):
     def setUp(self):
         self.lcf = LCFilter()

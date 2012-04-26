@@ -15,20 +15,38 @@ class UniqFilter(Filter):
     Adds an id key to the record [which is a dict] passing through the pipeline.
     the value of the id key is an md5sum of the content of the record.
 
+    INPUTS:
+
+        ignore = list of fields to ignore, default [].  
+
     NOTE: This does not prevent the record from passing through even if 
           previously seen.  This intended to be used with solr.  
 
     FUTURE: this could easily be made to have uniq output with limits on how 
             much gets stored.
     '''
+    def __init__(self,fields=[],ignore=[]):
+        Filter.__init__(self,fields=fields)
+        self.ignore = ignore
+
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
+        if self.ignore:
+            temp_dict = data.copy()
+            for key in self.ignore:
+                if key in temp_dict:
+                    del temp_dict[key] 
+            data['id'] = self.hashme(temp_dict)
+        else:
+            data['id'] = self.hashme(data)
+        return data
+
+    def hashme(self,data):
         if 'id' in data:
             del data['id']
         m = hashlib.md5()
         m.update(json.dumps(data,sort_keys=True))
-        data['id'] = m.hexdigest() 
-        return data
+        return m.hexdigest() 
 
 class ZuluDateFilter(Filter):
     '''
