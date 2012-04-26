@@ -28,17 +28,20 @@ class FileWatcher(object):
 
         multiline_regex = string, a regular expression defining what lines
             get appended to the previous line.
+ 
+        reverse = boolean, false by default. reverses the multiline_regex
+            similar to grep -v
 
         testing = boolean, false by default. used to run tests.
     '''
-    def __init__(self,folder,name,seek_end=True,last_lines=0,multiline=False,multiline_regex='^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)',testing=False):
+    def __init__(self,folder,name,seek_end=True,last_lines=0,multiline=False,multiline_regex='^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)',testing=False, reverse=False):
         self.name = name
         self.folder = folder
         self.absname = os.path.realpath(os.path.join(self.folder, self.name))
         self.file = None
         self.testing = testing
         self.multiline = multiline
-        #import pdb; pdb.set_trace()
+        self.reverse = reverse
         if not self.testing:
             if not self.regular_file():
                 raise Exception("%s is not a regular file" % self.absname)
@@ -54,7 +57,6 @@ class FileWatcher(object):
             if self.multiline:
                 self.multiline_regex = re.compile(multiline_regex)
                 self.multiline_cache = []
-
 
     def reopen(self):
         self.file.close()
@@ -76,6 +78,9 @@ class FileWatcher(object):
         this takes a list of lines and a regex.  those lines that match
         regex are concatenated with the previous line and the potentially
         shorter list is returned.
+
+        if self.reverse is True, it combines lines that do not match the
+        regex.
         '''
         if lines is None:
             lines = self.file.readlines()
@@ -84,21 +89,33 @@ class FileWatcher(object):
         combined = []
         x = 0
         for line in lines:
-            if regex.search(line):
-                if x > 0:
-                    combined[x-1] = '%s%s' % (combined[x-1],line)
+            if self.reverse:
+                if regex.search(line):
+                    combined.append(line)
+                    x += 1
                 else:
-                    # we are dropping content here, because we have nothing to
-                    # tie it to.  we have started reading in the middle of a 
-                    # traceback.
-                    continue
+                    if x > 0:
+                        combined[x-1] = '%s%s' % (combined[x-1],line)
+                    else:
+                        # dropping content
+                        continue
             else:
-                combined.append(line)
-                x += 1
+                if regex.search(line):
+                    if x > 0:
+                        combined[x-1] = '%s%s' % (combined[x-1],line)
+                    else:
+                        # we are dropping content here, because we have nothing to
+                        # tie it to.  we have started reading in the middle of a 
+                        # traceback.
+                        continue
+                else:
+                    combined.append(line)
+                    x += 1
         return combined    
                  
 
     def readfile(self):
+        #import pdb; pdb.set_trace()
         lines = self.file.readlines()
         if self.multiline:
             lines = self.combine_lines(lines=lines)
@@ -188,12 +205,15 @@ class DirWatcher(Input):
         multiline_regex = string, a regular expression defining what lines
             get appended to the previous line.
 
+        reverse = boolean, false by default. reverses the multiline_regex
+            similar to grep -v
+
     outputs
     
        dict like { 'msg' : 'line of data from file', 
                    'file' : '/path/to/file' }
     '''
-    def __init__(self, folder, regex='.*\.log', sleepfor=5,last_lines=0,multiline=False,multiline_regex='^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)'):
+    def __init__(self, folder, regex='.*\.log', sleepfor=5,last_lines=0,multiline=False,multiline_regex='^(\s+|Traceback|ValueError|UnboundLocalError|IntegrityError)', reverse=False):
         '''
         '''
         super(DirWatcher, self).__init__()
@@ -206,6 +226,7 @@ class DirWatcher(Input):
         self.last_lines = last_lines
         self.multiline = multiline
         self.multiline_regex = multiline_regex
+        self.reverse = reverse
         self.init_files()
         self.cache = []
 
@@ -233,10 +254,15 @@ class DirWatcher(Input):
             absname = os.path.realpath(os.path.join(self.folder, name))
             try:
                 # add a watcher for each file and seek to the end
-                self.files_map[absname] = FileWatcher(folder=self.folder,\
-                    name=name,seek_end=True,last_lines=self.last_lines,\
-                    multiline=self.multiline,\
-                    multiline_regex=self.multiline_regex)
+                #import pdb; pdb.set_trace()
+                self.files_map[absname] = FileWatcher(
+                    folder=self.folder,
+                    name=name,
+                    seek_end=True,
+                    last_lines=self.last_lines,
+                    multiline=self.multiline,
+                    multiline_regex=self.multiline_regex,
+                    reverse=self.reverse)
             except Exception, err:
                 pass 
 
@@ -258,8 +284,13 @@ class DirWatcher(Input):
             # file is not in the map 
             else:
                 try:
-                    self.files_map[absname] = FileWatcher(folder=self.folder,\
-                        name=name,seek_end=False)
+                    self.files_map[absname] = FileWatcher(
+                        folder=self.folder,
+                        name=name,
+                        seek_end=False,
+                        multiline=self.multiline,
+                        multiline_regex=self.multiline_regex,
+                        reverse=self.reverse)
                 except Exception, err:
                     pass
 
