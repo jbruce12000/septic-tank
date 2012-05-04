@@ -50,6 +50,10 @@ start=0
 // needs to be powered by a button.  if there are no params in the url, then
 // it is the first call, we need to set some defaults and then redirect.
 
+// need to parse url and params
+// https://github.com/allmarkedup/jQuery-URL-Parser/blob/master/jquery.url.js
+// 
+
 //----------------------------------------------------------------------------
 // solrurl
 // input
@@ -59,6 +63,43 @@ start=0
 // output
 //     url string like http://virtdev.cei.cox.com:8080/solr/medley/select/
 //----------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------
+// query_params
+// inputs
+//    window.location url
+// outputs
+//    dict of query params to values
+//----------------------------------------------------------------------------
+function query_params() {
+var urlParams = {};
+var e,
+    a = /\+/g,  // Regex for replacing addition symbol with a space
+    r = /([^&=]+)=?([^&]*)/g,
+    d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
+    q = window.location.search.substring(1);
+
+while (e = r.exec(q))
+   urlParams[d(e[1])] = d(e[2]);
+
+return urlParams;
+}
+
+//----------------------------------------------------------------------------
+// size
+// inputs 
+//     dict
+// outputs 
+//     integer count of keys
+//----------------------------------------------------------------------------
+function size(obj) {
+var c = 0, key;
+for (key in obj) {
+    if (obj.hasOwnProperty(key)) c++;
+}
+return c;
+}
+
 
 //----------------------------------------------------------------------------
 // solr - get data via ajax from a solr server
@@ -262,6 +303,9 @@ return html
 $(document).ready(function() {
 // grab initial content from solr
 solr();
+
+q=query_params();
+s=size(q);
 });
 
 </script>
