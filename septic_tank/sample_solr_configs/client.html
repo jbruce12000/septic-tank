@@ -1,0 +1,303 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+                    "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head> 
+<meta http-equiv="cache-control" content="no-cache" />
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="http://code.jquery.com/ui/1.8.19/jquery-ui.min.js" type="text/javascript"></script>
+</head>
+
+</style>
+
+<script>
+$(function() {
+    $( ".statsblocks" ).selectable();
+     });
+</script>
+
+<script>
+
+// solrhost
+solrhost="virtdev.cei.cox.com";
+// solrport
+solrport="8080";
+// solrcore
+solrcore="medley";
+// map all possible facet_fields to name of field without type
+possible_facet_fields={};
+// fields I currently want to facet on
+active_facet_fields={};
+// current solr query
+q="";
+// facet date start date
+facet_date_range_start="NOW/HOUR-24HOURS";
+// facet date range end
+facet_date_range_end="NOW/HOUR+2HOURS";
+// facet date range gap
+facet_date_range_gap="+1HOURS";
+// rows to return
+rows=20
+// start of paging for solr query
+start=0
+
+// FIX, need to set this so redirect happens, and back buttons work
+// window.location = url
+
+// so str = $.param({some: stuff}); can be used to squish the hash into
+// url params and set window.location
+// see http://api.jquery.com/jQuery.param/
+
+// needs to be powered by a button.  if there are no params in the url, then
+// it is the first call, we need to set some defaults and then redirect.
+
+//----------------------------------------------------------------------------
+// solrurl
+// input
+//     solrhost - string hostname or ip
+//     solrport - port on which solr runs
+//     solrcore - name of solr core
+// output
+//     url string like http://virtdev.cei.cox.com:8080/solr/medley/select/
+//----------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------
+// solr - get data via ajax from a solr server
+//----------------------------------------------------------------------------
+
+function solr() {
+$.ajax({ url : "http://virtdev.cei.cox.com:8080/solr/medley/select/?wt=json&json.wrf=?&json.nl=map&",
+         dataType: "json",
+         data: { q: "date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]",
+                start: 0,
+                rows: 20,
+                facet: "on",
+                "facet.field": "type_t",
+                "facet.range": "date_dt",
+                "f.date_dt.facet.range.start": "NOW/HOUR-24HOURS",
+                "f.date_dt.facet.range.end": "NOW/HOUR+2HOURS",
+                "f.date_dt.facet.range.gap": "+1HOURS"
+                },
+         success: process_json,
+         error: function(xhr,err,text){ alert(err+" and "+text);},
+});
+}
+
+function process_json(data) {
+process_facets(data)
+process_docs(data)
+}
+
+//----------------------------------------------------------------------------
+// input
+//     integer
+// output
+//     commified string
+//----------------------------------------------------------------------------
+function commify(num) {
+        if(typeof(num) == "number") {
+            nStr = num.toString();
+            } 
+        else {
+            nStr = num
+            }
+	nStr += '';
+	x = nStr.split('.');
+	x1 = x[0];
+	x2 = x.length > 1 ? '.' + x[1] : '';
+	var rgx = /(\d+)(\d{3})/;
+	while (rgx.test(x1)) {
+		x1 = x1.replace(rgx, '$1' + ',' + '$2');
+	}
+	return x1 + x2;
+}
+
+//----------------------------------------------------------------------------
+// input
+//     integer
+// output
+//     zero padded string
+function addZero(i) {
+if (i<10) { i="0" + i; }
+return i;
+}
+
+//----------------------------------------------------------------------------
+// input
+//    date 
+// output
+//    string yyyy-mm-dd hh:mm:ss in local time
+function neat_time(d) {
+return d.getFullYear()+"-"+addZero(d.getMonth()+1)+"-"+addZero(d.getDate())+" "+
+       addZero(d.getHours())+":"+addZero(d.getMinutes())+":"+
+       addZero(d.getSeconds())
+}
+
+//----------------------------------------------------------------------------
+// inputs
+//     dict
+// outputs
+//     list of sorted keys
+function sortkeys(dict) {
+var keys = [];
+    for (var key in dict) {
+      if (dict.hasOwnProperty(key)) {
+        keys.push(key);
+      }
+    }
+    keys.sort();
+return keys
+}
+
+//----------------------------------------------------------------------------
+// inputs
+//     data - json object containing solr docs
+// outputs
+//     html - to the records div
+function process_docs(data){
+var docs=data.response.docs;
+var begin=data.response.start;
+var end=data.response.docs.length+begin;
+begin=begin+1;
+var total=data.response.numFound;
+
+$("#records-header").html("Records "+begin+" - "+end+" of "+total);
+$("#records").empty();
+
+$.each(docs,function(i,doc) {
+    var cls="";
+    if (i % 2 == 0) { cls="even"; }
+    else { cls="odd"; }
+
+    //sort fields alphabetically by name
+    sorted = sortkeys(doc); 
+    for (i in sorted) {
+        var key=sorted[i];
+        var value=doc[key];
+        field=remove_field_type(key);  
+        $("#records").append("<div class=\"row "+cls+"\"><div class=\"column-field\">"+field+"</div><div class=\"column-value\">"+value+"</div></div>");
+        }
+    });
+}
+
+//----------------------------------------------------------------------------
+// inputs
+//     field - solr field name like date_dt
+// outputs
+//     string with the final underscore and type removed
+function remove_field_type(field) {
+words=field.split("_");
+if(words.length > 1){
+    words=words.slice(0,words.length-1);
+    }
+return words.join("_")
+}
+
+//----------------------------------------------------------------------------
+// inputs
+//     data - json object containing solr date facet counts
+// outputs
+//
+function process_facets(data){
+process_date_facets(data);
+}
+
+//----------------------------------------------------------------------------
+// inputs
+//     data - json object containing solr date facet counts
+// outputs
+//
+//----------------------------------------------------------------------------
+function process_date_facets(data){
+var dates = data.facet_counts.facet_ranges.date_dt.counts;
+var max = max_dict(dates);
+$('#dateblocks').empty()
+$.each(dates,function(key, value) {
+    percent = Math.floor(value/max*100)
+    var dt = new Date(key)
+    overlay = commify(value)
+    $("#dateblocks").append(block(percent,overlay,neat_time(dt)));
+    });
+}
+
+//----------------------------------------------------------------------------
+// max_dict - reads keys and returns the largest value
+// inputs
+//     dict - keys don't matter, values must be integers
+// outputs
+//     largest value
+//----------------------------------------------------------------------------
+function max_dict(dict){
+var max=0
+$.each(dict,function(key,value) {
+    if(value>max) { max=value; }
+    });
+return max;
+}
+
+//----------------------------------------------------------------------------
+// block
+// inputs
+//     percent, integer 0-100
+//     text
+// outputs
+//     html representation of a block
+//----------------------------------------------------------------------------
+function block(percent,overlaytext,text) {
+var html="<div class=\"block-wrap\">\n";
+html = html + "<div class=\"block\">\n";
+html = html + "<div class=\"block-overlay-text\">"+overlaytext+"</div>\n";
+html = html + "<div class=\"block-left\" style=\"width:";
+html = html + (100-percent) + "%\"></div>\n";
+html = html + "<div class=\"block-right\" style=\"width:";
+html = html + percent + "%\"></div>\n";
+html = html + "</div><!--end block-->\n";
+html = html + "<div class=\"block-text\">";
+html = html + text + "</div>\n";
+html = html + "</div><!--end block-wrap-->\n";
+return html
+} // end block
+
+
+
+$(document).ready(function() {
+// grab initial content from solr
+solr();
+});
+
+</script>
+
+
+<style>
+.block { width: 100px; height: 20px; border: 1px solid #888888; margin: 1px 3px 1px 1px; background: #FFFFFF; float:left; position:relative; }
+.block-overlay-text { color:black; width: 100%; line-height:20px; position: absolute; top:0; left:0; text-align: right; }
+.block-left { background: #FFFFFF; height: 100%; float: left; }
+.block-right { background: #888888; height: 100%; float: left;  }
+.block-wrap { clear: left; }
+.block-text { float: left; line-height: 24px; }
+.statsblocks .ui-selecting { color: #0000FF; }
+.statsblocks .ui-selected { color: #0000FF; }
+.facet-wrap { float: left; padding: 0px 0px 10px 0px; }
+tr.even td { background: #CCCCCC; }
+.records-wrapper { clear: left; }
+.records-header { width: 100%; background: #888888; font-weight: bold; text-align: center; padding: 5px 0px 5px 0px;}
+
+.atable { display: table; width: 100%; }
+.row  { display: table-row; }
+.even { background: #CCCCCC; }
+.column-field,.column-value { display: table-cell; }
+.column-field { width:10%; }
+</style>
+
+<body>
+<div class="facet-wrap">
+<div id="date-header" class="records-header">Facet Date/Time</div>
+<div id="dateblocks" class="statsblocks"></div>
+</div><!--end facet-wrap-->
+
+<div id="records-wrapper" class="records-wrapper">
+<div id="records-header" class="records-header"></div>
+<div id="records" class="records atable">Please wait...</div>
+</div><!--end recrds-wrapper-->
+
+</body>
+</html>
