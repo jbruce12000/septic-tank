@@ -17,29 +17,6 @@ $(function() {
 
 <script>
 
-// solrhost 
-solrhost="virtdev.cei.cox.com";
-// solrport
-solrport="8080";
-// solrcore
-solrcore="medley";
-// map all possible facet_fields to name of field without type
-possible_facet_fields={};
-// fields I currently want to facet on
-active_facet_fields={};
-// current solr query
-q="";
-// facet date start date
-facet_date_range_start="NOW/HOUR-24HOURS";
-// facet date range end
-facet_date_range_end="NOW/HOUR+2HOURS";
-// facet date range gap
-facet_date_range_gap="+1HOURS";
-// rows to return
-rows=20
-// start of paging for solr query
-start=0
-
 // FIX, need to set this so redirect happens, and back buttons work
 // window.location = url
 
@@ -55,14 +32,106 @@ start=0
 // 
 
 //----------------------------------------------------------------------------
-// solrurl
-// input
-//     solrhost - string hostname or ip
-//     solrport - port on which solr runs
-//     solrcore - name of solr core
-// output
-//     url string like http://virtdev.cei.cox.com:8080/solr/medley/select/
+// size
+// inputs 
+//     dict
+// outputs 
+//     integer count of keys
 //----------------------------------------------------------------------------
+function size(obj) {
+var c = 0, key;
+for (key in obj) {
+    if (obj.hasOwnProperty(key)) c++;
+}
+return c;
+}
+
+
+//----------------------------------------------------------------------------
+// default_params - object to store default params
+//----------------------------------------------------------------------------
+function solrsearch() {
+
+this.params = query_params()
+
+this.q = this.params["q"] || "date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
+this.facet_range = this.params["facet.range"] || "date_dt";
+this.facet = this.params["facet"] || "on";
+this.host = this.params["host"] || "virtdev.cei.cox.com";
+this.port = this.params["port"] || "8080";
+this.core = this.params["core"] || "medley";
+this.facet_date_range_start = this.params["f.date_dt.facet.range.start"] || "NOW/HOUR-24HOURS";
+this.facet_date_range_end = this.params["f.date_dt.facet.range.end"] || "NOW/HOUR+2HOURS";
+this.facet_date_range_gap = this.params["f.date_dt.facet.range.gap"] || "+1HOURS";
+this.rows = this.params["rows"] || 20;
+this.start = this.params["start"] || 0;
+this.facet_field = this.params["facet.field"] || ["type_t","server_ti"];
+
+this.baseurl = function() {
+    return "http://"+this.host+":"+this.port+"/solr/"+this.core+"/select/" +
+           "?wt=json&json.wrf=?&json.nl=map&";
+    }
+
+this.toString = function() {
+    return this.fullurl();
+    }
+
+this.fullurl = function() {
+    return this.baseurl() + this.query();
+    }
+
+this.allparams = function() {
+    var data = {};
+    data["host"] = this.host;
+    data["port"] = this.port;
+    data["core"] = this.core;
+    return $.param(data) + "&" + this.query()
+    }
+
+this.query = function() {
+    var data = {};
+    data["q"] = "date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
+    data["start"] = this.start;
+    data["rows"] = this.rows;
+    data["facet"] = this.facet;
+    data["facet.range"] = this.facet_range;
+    data["f.date_dt.facet.range.start"] = this.facet_date_range_start;
+    data["f.date_dt.facet.range.end"] = this.facet_date_range_end;
+    data["f.date_dt.facet.range.gap"] = this.facet_date_range_gap;
+
+    var q = $.param(data);
+    q = q + "&" + this.flattenlist('facet.field',this.facet_field);
+    return q;
+    }
+
+this.flattenlist = function(key,list) {
+    var pieces = []
+    for each (value in list) {
+        var mydict = {}
+        mydict[key] = value
+        pieces.push($.param(mydict));
+        }
+    return pieces.join("&");
+    }
+
+this.ajax = function() {
+    $.ajax({ url : this.fullurl(),
+         dataType: "json",
+         success: process_json,
+         error: function(xhr,err,text){ alert(err+" and "+text);},
+         });
+    }
+    
+
+// no query params means this is first access
+if(size(this.params)==0) {
+    window.location = window.location + "?" + this.allparams(); 
+    }
+else {
+    this.ajax();
+    }
+}
+
 
 //----------------------------------------------------------------------------
 // query_params
@@ -79,25 +148,25 @@ var e,
     d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
     q = window.location.search.substring(1);
 
-while (e = r.exec(q))
-   urlParams[d(e[1])] = d(e[2]);
+while (e = r.exec(q)) {
+    key = d(e[1]);
+    value = d(e[2]);
 
+    // if the same key exists multiple times, add it to an array
+    // solr has this with facet.field for instance
+    if(urlParams.hasOwnProperty(key)) {
+        if(typeof urlParams[key] == "object") {
+            urlParams[key].push(value);
+            }
+        else {
+            urlParams[key] = [ urlParams[key], value ];
+            } 
+        }
+    else {
+        urlParams[key] = value;
+        }
+    }
 return urlParams;
-}
-
-//----------------------------------------------------------------------------
-// size
-// inputs 
-//     dict
-// outputs 
-//     integer count of keys
-//----------------------------------------------------------------------------
-function size(obj) {
-var c = 0, key;
-for (key in obj) {
-    if (obj.hasOwnProperty(key)) c++;
-}
-return c;
 }
 
 
@@ -300,12 +369,24 @@ return html
 
 
 
-$(document).ready(function() {
-// grab initial content from solr
-solr();
+//----------------------------------------------------------------------------
+// initialize - initialize query parameters, handle start-up tasks for page
+// inputs
+//     none
+// outputs
+//     none 
+//----------------------------------------------------------------------------
+function initialize() {
 
-q=query_params();
-s=size(q);
+ss = new solrsearch();
+
+
+}
+
+//----------------------------------------------------------------------------
+$(document).ready(function() {
+initialize()
+
 });
 
 </script>
