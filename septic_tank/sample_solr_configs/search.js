@@ -1,0 +1,374 @@
+//$(function() {
+//   $( ".statsblocks" ).selectable();
+//     });
+
+//----------------------------------------------------------------------------
+// size
+// inputs 
+//     dict
+// outputs 
+//     integer count of keys
+//----------------------------------------------------------------------------
+function size(obj) {
+var c = 0, key;
+for (key in obj) {
+    if (obj.hasOwnProperty(key)) c++;
+}
+return c;
+}
+
+
+//----------------------------------------------------------------------------
+// default_params - object to store default params
+//----------------------------------------------------------------------------
+function solrsearch() {
+
+// grab query params from url
+this.params = query_params()
+
+// set defaults if needed
+this.q = this.params["q"] || "date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
+this.facet_range = this.params["facet.range"] || "date_dt";
+this.facet = this.params["facet"] || "on";
+this.host = this.params["host"] || "virtdev.cei.cox.com";
+this.port = this.params["port"] || "8080";
+this.core = this.params["core"] || "medley";
+this.facet_date_range_start = this.params["f.date_dt.facet.range.start"] || "NOW/HOUR-24HOURS";
+this.facet_date_range_end = this.params["f.date_dt.facet.range.end"] || "NOW/HOUR+2HOURS";
+this.facet_date_range_gap = this.params["f.date_dt.facet.range.gap"] || "+1HOURS";
+this.rows = this.params["rows"] || 20;
+this.start = this.params["start"] || 0;
+this.facet_field = this.params["facet.field"] || ["type_t","server_ti"];
+
+
+this.baseurl = function() {
+    return "http://"+this.host+":"+this.port+"/solr/"+this.core+"/select/" +
+           "?wt=json&json.wrf=?&json.nl=map&";
+    }
+
+this.toString = function() {
+    return this.fullurl();
+    }
+
+this.fullurl = function() {
+    return this.baseurl() + this.query();
+    }
+
+this.allparams = function() {
+    var data = {};
+    data["host"] = this.host;
+    data["port"] = this.port;
+    data["core"] = this.core;
+    return $.param(data) + "&" + this.query()
+    }
+
+this.query = function() {
+    var data = {};
+    data["q"] = "date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
+    data["start"] = this.start;
+    data["rows"] = this.rows;
+    data["facet"] = this.facet;
+    data["facet.range"] = this.facet_range;
+    data["f.date_dt.facet.range.start"] = this.facet_date_range_start;
+    data["f.date_dt.facet.range.end"] = this.facet_date_range_end;
+    data["f.date_dt.facet.range.gap"] = this.facet_date_range_gap;
+
+    var q = $.param(data);
+    q = q + "&" + this.flattenlist('facet.field',this.facet_field);
+    return q;
+    }
+
+this.flattenlist = function(key,list) {
+    var pieces = []
+    for each (value in list) {
+        var mydict = {}
+        mydict[key] = value
+        pieces.push($.param(mydict));
+        }
+    return pieces.join("&");
+    }
+
+this.ajax = function() {
+    $.ajax({ url : this.fullurl(),
+         dataType: "json",
+         success: process_json,
+         error: function(xhr,err,text){ alert(err+" and "+text);},
+         });
+    }
+
+// no query params means this is first access
+if(size(this.params)==0) {
+    window.location = window.location + "?" + this.allparams(); 
+    }
+else {
+    this.ajax();
+    }
+}
+
+
+//----------------------------------------------------------------------------
+// query_params
+// inputs
+//    window.location url
+// outputs
+//    dict of query params to values
+//----------------------------------------------------------------------------
+function query_params() {
+var urlParams = {};
+var e,
+    a = /\+/g,  // Regex for replacing addition symbol with a space
+    r = /([^&=]+)=?([^&]*)/g,
+    d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
+    q = window.location.search.substring(1);
+
+while (e = r.exec(q)) {
+    key = d(e[1]);
+    value = d(e[2]);
+
+    // if the same key exists multiple times, add it to an array
+    // solr has this with facet.field for instance
+    if(urlParams.hasOwnProperty(key)) {
+        if(typeof urlParams[key] == "object") {
+            urlParams[key].push(value);
+            }
+        else {
+            urlParams[key] = [ urlParams[key], value ];
+            } 
+        }
+    else {
+        urlParams[key] = value;
+        }
+    }
+return urlParams;
+}
+
+
+
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+function process_json(data) {
+process_facets(data)
+process_docs(data)
+}
+
+//----------------------------------------------------------------------------
+// input
+//     integer
+// output
+//     commified string
+//----------------------------------------------------------------------------
+function commify(num) {
+        if(typeof(num) == "number") {
+            nStr = num.toString();
+            } 
+        else {
+            nStr = num
+            }
+	nStr += '';
+	x = nStr.split('.');
+	x1 = x[0];
+	x2 = x.length > 1 ? '.' + x[1] : '';
+	var rgx = /(\d+)(\d{3})/;
+	while (rgx.test(x1)) {
+		x1 = x1.replace(rgx, '$1' + ',' + '$2');
+	}
+	return x1 + x2;
+}
+
+//----------------------------------------------------------------------------
+// input
+//     integer
+// output
+//     zero padded string
+function addZero(i) {
+if (i<10) { i="0" + i; }
+return i;
+}
+
+//----------------------------------------------------------------------------
+// input
+//    date 
+// output
+//    string yyyy-mm-dd hh:mm:ss in local time
+function neat_time(d) {
+return d.getFullYear()+"-"+addZero(d.getMonth()+1)+"-"+addZero(d.getDate())+" "+
+       addZero(d.getHours())+":"+addZero(d.getMinutes())+":"+
+       addZero(d.getSeconds())
+}
+
+//----------------------------------------------------------------------------
+// inputs
+//     dict
+// outputs
+//     list of sorted keys
+function sortkeys(dict) {
+var keys = [];
+    for (var key in dict) {
+      if (dict.hasOwnProperty(key)) {
+        keys.push(key);
+      }
+    }
+    keys.sort();
+return keys
+}
+
+//----------------------------------------------------------------------------
+// inputs
+//     data - json object containing solr docs
+// outputs
+//     html - to the records div
+function process_docs(data){
+var docs=data.response.docs;
+var begin=data.response.start;
+var end=data.response.docs.length+begin;
+begin=begin+1;
+var total=data.response.numFound;
+
+$("#records-header").html("Records "+begin+" - "+end+" of "+total);
+$("#records").empty();
+
+$.each(docs,function(i,doc) {
+    var cls="";
+    if (i % 2 == 0) { cls="even"; }
+    else { cls="odd"; }
+
+    //sort fields alphabetically by name
+    sorted = sortkeys(doc); 
+    for (i in sorted) {
+        var key=sorted[i];
+        var value=doc[key];
+        field=remove_field_type(key);  
+        $("#records").append("<div class=\"row "+cls+"\"><div class=\"column-field\">"+field+"</div><div class=\"column-value\">"+value+"</div></div>");
+        }
+    });
+}
+
+//----------------------------------------------------------------------------
+// inputs
+//     field - solr field name like date_dt
+// outputs
+//     string with the final underscore and type removed
+function remove_field_type(field) {
+words=field.split("_");
+if(words.length > 1){
+    words=words.slice(0,words.length-1);
+    }
+return words.join("_")
+}
+
+//----------------------------------------------------------------------------
+// inputs
+//     data - json object containing solr date facet counts
+// outputs
+//
+function process_facets(data){
+process_date_facets(data);
+process_facet_fields(data);
+$(".statsblocks").selectable();
+}
+
+//----------------------------------------------------------------------------
+// inputs
+//     data - solr json object 
+// outputs
+//
+//----------------------------------------------------------------------------
+function process_facet_fields(data){
+$("#facets").empty();
+var fields=data.facet_counts.facet_fields;
+for (field in fields) {
+
+    // add a div for this facet
+    $("#facets").append("<div class=\"facet-wrap\">"+
+        "<div id=\""+field+"-header\" class=\"records-header\">"+remove_field_type(field)+
+        "</div><div id=\""+field+"\" class=\"statsblocks\"></div>"+
+        "</div><!--end facet-wrap-->");
+
+    var selector = "#"+field;
+    var thefield = eval("data.facet_counts.facet_fields" + "." + field);
+    var max = max_dict(thefield);
+    $.each(thefield,function(key,value) {
+        var percent = Math.floor(value/max*100)
+        var overlay = commify(value)
+        $(selector).append(block(percent,overlay,key));
+        });
+    }
+}
+//----------------------------------------------------------------------------
+// inputs
+//     data - json object containing solr date facet counts
+// outputs
+//
+//----------------------------------------------------------------------------
+function process_date_facets(data){
+var dates = data.facet_counts.facet_ranges.date_dt.counts;
+var max = max_dict(dates);
+$('#dateblocks').empty()
+$.each(dates,function(key, value) {
+    percent = Math.floor(value/max*100)
+    var dt = new Date(key)
+    overlay = commify(value)
+    $("#dateblocks").append(block(percent,overlay,neat_time(dt)));
+    });
+}
+
+//----------------------------------------------------------------------------
+// max_dict - reads keys and returns the largest value
+// inputs
+//     dict - keys don't matter, values must be integers
+// outputs
+//     largest value
+//----------------------------------------------------------------------------
+function max_dict(dict){
+var max=0
+$.each(dict,function(key,value) {
+    if(value>max) { max=value; }
+    });
+return max;
+}
+
+//----------------------------------------------------------------------------
+// block
+// inputs
+//     percent, integer 0-100
+//     text
+// outputs
+//     html representation of a block
+//----------------------------------------------------------------------------
+function block(percent,overlaytext,text) {
+var html="<div class=\"block-wrap\">\n";
+html = html + "<div class=\"block\">\n";
+html = html + "<div class=\"block-overlay-text\">"+overlaytext+"</div>\n";
+html = html + "<div class=\"block-left\" style=\"width:";
+html = html + (100-percent) + "%\"></div>\n";
+html = html + "<div class=\"block-right\" style=\"width:";
+html = html + percent + "%\"></div>\n";
+html = html + "</div><!--end block-->\n";
+html = html + "<div class=\"block-text\">";
+html = html + text + "</div>\n";
+html = html + "</div><!--end block-wrap-->\n";
+return html
+} // end block
+
+
+
+//----------------------------------------------------------------------------
+// initialize - initialize query parameters, handle start-up tasks for page
+// inputs
+//     none
+// outputs
+//     none 
+//----------------------------------------------------------------------------
+function initialize() {
+
+ss = new solrsearch();
+
+
+}
+
+//----------------------------------------------------------------------------
+$(document).ready(function() {
+initialize()
+
+});
+
