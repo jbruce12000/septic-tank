@@ -96,9 +96,15 @@ this.ajax = function() {
          });
     }
 
+this.redirect = function() {
+    var url = window.location+"";
+    url = url.split("?")[0];
+    window.location = url + "?" + this.allparams(); 
+    }
+
 // no query params means this is first access
 if(size(this.params)==0) {
-    window.location = window.location + "?" + this.allparams(); 
+    this.redirect();
     }
 else {
     this.ajax();
@@ -224,6 +230,7 @@ var end=data.response.docs.length+begin;
 begin=begin+1;
 var total=data.response.numFound;
 
+//FIX - need links here to grab the next N recs, last N recs
 $("#records-header").html("Records "+begin+" - "+end+" of "+total);
 $("#records").empty();
 
@@ -233,14 +240,26 @@ $.each(docs,function(i,doc) {
     else { cls="odd"; }
 
     //sort fields alphabetically by name
+    // FIX - each of the fields should be a link to facet on that link
     sorted = sortkeys(doc); 
     for (i in sorted) {
         var key=sorted[i];
         var value=doc[key];
-        field=remove_field_type(key);  
-        $("#records").append("<div class=\"row "+cls+"\"><div class=\"column-field\">"+field+"</div><div class=\"column-value\">"+value+"</div></div>");
+        field=remove_field_type(key);
+        $("#records").append("<div class=\"row "+cls+"\"><div class=\"column-field\"><a href=\"#"+key+"\">"+field+"</a></div><div class=\"column-value\">"+value+"</div></div>");
         }
     });
+
+// this adds a new facet field
+$(".column-field a").click(function() {
+    // remove the leading # 
+    field=this.hash+"";
+    field=field.split("#")[1];
+    ss.facet_field.push(field);
+    ss.redirect();
+    });
+
+
 }
 
 //----------------------------------------------------------------------------
