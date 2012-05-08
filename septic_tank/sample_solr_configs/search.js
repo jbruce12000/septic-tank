@@ -1,7 +1,3 @@
-//$(function() {
-//   $( ".statsblocks" ).selectable();
-//     });
-
 //----------------------------------------------------------------------------
 // size
 // inputs 
@@ -16,6 +12,19 @@ for (key in obj) {
 }
 return c;
 }
+
+// for setting div content to grab later from each field
+// $("#date-header").attr("facet-field-name","date_dt");
+// for grabbing needed data
+// $("#date-header").attr("facet-field-name")
+
+// format for solr query...
+//date_dt:([2012-05-06T00:00:00Z TO 2012-05-06T01:00:00Z] OR
+//[2012-05-06T01:00:00Z TO 2012-05-06T02:00:00Z])
+// AND
+// server_ti:(djaapaprd4 OR djaapaprd4.ddtc OR djaapaprd4.ddtc.cmgdigital OR djaapaprd4.ddtc.cmgdigital.com)
+// AND
+// action_t:(head OR option)
 
 
 //----------------------------------------------------------------------------
@@ -79,9 +88,9 @@ this.query = function() {
     }
 
 this.flattenlist = function(key,list) {
-    var pieces = []
+    var pieces = [];
     for each (value in list) {
-        var mydict = {}
+        var mydict = {};
         mydict[key] = value
         pieces.push($.param(mydict));
         }
@@ -336,7 +345,9 @@ for (field in fields) {
     $.each(thefield,function(key,value) {
         var percent = Math.floor(value/max*100)
         var overlay = commify(value)
-        $(selector).append(block(percent,overlay,key));
+        var attrs = { "facet-field-name" : field,
+                      "facet-field-value" : key };
+        $(selector).append(block(percent,overlay,key,attrs));
         });
     }
 }
@@ -351,10 +362,12 @@ var dates = data.facet_counts.facet_ranges.date_dt.counts;
 var max = max_dict(dates);
 $('#dateblocks').empty()
 $.each(dates,function(key, value) {
-    percent = Math.floor(value/max*100)
-    var dt = new Date(key)
-    overlay = commify(value)
-    $("#dateblocks").append(block(percent,overlay,neat_time(dt)));
+    var attrs={ "facet-field-name" : "date_dt",
+                "facet-field-value" : key };
+    percent = Math.floor(value/max*100);
+    var dt = new Date(key);
+    overlay = commify(value);
+    $("#dateblocks").append(block(percent,overlay,neat_time(dt),attrs));
     });
 }
 
@@ -374,29 +387,48 @@ return max;
 }
 
 //----------------------------------------------------------------------------
+// flatten_attrs
+// input
+//    dict
+// output
+//    string "key1=val1 key2=val2..."
+//----------------------------------------------------------------------------
+function flatten_attrs(attrs){
+if(!attrs) { return ""; }
+var kvps=[];
+$.each(attrs,function(key,value) {
+    kvps.push(key+"="+"\""+value+"\"");
+    });
+return kvps.join(" ");
+}
+
+//----------------------------------------------------------------------------
 // block
 // inputs
 //     percent, integer 0-100
-//     text
+//     overylaytext char - will overlay block
+//     text char - will be to the right of block
+//     attrs - dict of keys/values to be added to the block-text div
 // outputs
 //     html representation of a block
 //----------------------------------------------------------------------------
-function block(percent,overlaytext,text) {
-var html="<div class=\"block-wrap\">\n";
-html = html + "<div class=\"block\">\n";
-html = html + "<div class=\"block-overlay-text\">"+overlaytext+"</div>\n";
-html = html + "<div class=\"block-left\" style=\"width:";
-html = html + (100-percent) + "%\"></div>\n";
-html = html + "<div class=\"block-right\" style=\"width:";
-html = html + percent + "%\"></div>\n";
-html = html + "</div><!--end block-->\n";
-html = html + "<div class=\"block-text\">";
-html = html + text + "</div>\n";
-html = html + "</div><!--end block-wrap-->\n";
+function block(percent,overlaytext,text,attrs) {
+
+var kvps=flatten_attrs(attrs);
+
+var html="<div class=\"block-wrap\">\n" +
+    "<div class=\"block\">\n" +
+    "<div class=\"block-overlay-text\">"+overlaytext+"</div>\n" +
+    "<div class=\"block-left\" style=\"width:" +
+    (100-percent) + "%\"></div>\n" +
+    "<div class=\"block-right\" style=\"width:" +
+    percent + "%\"></div>\n" +
+    "</div><!--end block-->\n" +
+    "<div "+kvps+" class=\"block-text\">" +
+    text + "</div>\n" +
+    "</div><!--end block-wrap-->\n";
 return html
 } // end block
-
-
 
 //----------------------------------------------------------------------------
 // initialize - initialize query parameters, handle start-up tasks for page
@@ -406,7 +438,7 @@ return html
 //     none 
 //----------------------------------------------------------------------------
 function initialize() {
-
+// global, on purpose.
 ss = new solrsearch();
 
 
