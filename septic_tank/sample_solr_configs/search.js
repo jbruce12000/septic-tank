@@ -98,6 +98,7 @@ this.ajax = function() {
 
 this.redirect = function() {
     var url = window.location+"";
+    // remove the query string
     url = url.split("?")[0];
     window.location = url + "?" + this.allparams(); 
     }
@@ -230,8 +231,22 @@ var end=data.response.docs.length+begin;
 begin=begin+1;
 var total=data.response.numFound;
 
-//FIX - need links here to grab the next N recs, last N recs
-$("#records-header").html("Records "+begin+" - "+end+" of "+total);
+// paging...
+if (typeof(ss.rows)=="string") {
+    ss.rows = parseInt(ss.rows);
+    }
+
+var prev="<a href=\"#start="+(begin-ss.rows-1)+"\">prev</a>";
+var next="<a href=\"#start="+(begin+ss.rows-1)+"\">next</a>";
+
+// FIX - does not handle end
+if (begin <= 1) {
+    $("#records-header").html("Records "+begin+" - "+end+" of "+total+" "+next);
+    }
+else {
+    $("#records-header").html(prev+" Records "+begin+" - "+end+" of "+total+" "+next);
+    }
+    
 $("#records").empty();
 
 $.each(docs,function(i,doc) {
@@ -253,9 +268,18 @@ $.each(docs,function(i,doc) {
 // this adds a new facet field
 $(".column-field a").click(function() {
     // remove the leading # 
-    field=this.hash+"";
+    var field=this.hash+"";
     field=field.split("#")[1];
     ss.facet_field.push(field);
+    ss.redirect();
+    });
+
+// pager link for records header, prev or next
+$(".records-header a").click(function() {
+    // remove the leading # 
+    var field=this.hash+"";
+    field=field.split("=")[1];
+    ss.start=field;
     ss.redirect();
     });
 
@@ -298,6 +322,9 @@ var fields=data.facet_counts.facet_fields;
 for (field in fields) {
 
     // add a div for this facet
+    // FIX - the wrapper for these facets is a problem and jumps down
+    // once it fills the screen.
+    // these needs to be a clickable X in the corner to close a facet
     $("#facets").append("<div class=\"facet-wrap\">"+
         "<div id=\""+field+"-header\" class=\"records-header\">"+remove_field_type(field)+
         "</div><div id=\""+field+"\" class=\"statsblocks\"></div>"+
