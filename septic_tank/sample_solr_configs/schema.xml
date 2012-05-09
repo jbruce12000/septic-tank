@@ -34,13 +34,13 @@
     <fieldType name="date" class="solr.TrieDateField" omitNorms="true" precisionStep="0" positionIncrementGap="0"/>
 
     <fieldType name="text_path" class="solr.TextField" positionIncrementGap="100">
-      <analyzer type="Index">
+      <analyzer>
         <tokenizer class="solr.PathHierarchyTokenizerFactory" delimiter="/"/>
       </analyzer>
     </fieldType>
 
     <fieldType name="text_ip" class="solr.TextField" positionIncrementGap="100">
-      <analyzer type="Index">
+      <analyzer>
         <tokenizer class="solr.PathHierarchyTokenizerFactory" delimiter="."/>
       </analyzer>
     </fieldType>
