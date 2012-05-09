@@ -37,11 +37,18 @@
       <analyzer>
         <tokenizer class="solr.PathHierarchyTokenizerFactory" delimiter="/"/>
       </analyzer>
+      
+      <analyzer type="query">
+      <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+      </analyzer>
     </fieldType>
 
     <fieldType name="text_ip" class="solr.TextField" positionIncrementGap="100">
       <analyzer>
         <tokenizer class="solr.PathHierarchyTokenizerFactory" delimiter="."/>
+      </analyzer>
+      <analyzer type="query">
+      <tokenizer class="solr.WhitespaceTokenizerFactory"/>
       </analyzer>
     </fieldType>
 
