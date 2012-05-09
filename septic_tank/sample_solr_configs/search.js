@@ -36,7 +36,8 @@ function solrsearch() {
 this.params = query_params()
 
 // set defaults if needed
-this.q = this.params["q"] || "date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
+this.q = this.params["q"] || "*:*";
+this.fq = this.params["fq"] || ["date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]"];
 this.facet_range = this.params["facet.range"] || "date_dt";
 this.facet = this.params["facet"] || "on";
 this.host = this.params["host"] || "virtdev.cei.cox.com";
@@ -60,7 +61,7 @@ this.toString = function() {
     }
 
 this.fullurl = function() {
-    return this.baseurl() + this.query();
+    return this.baseurl() + this.whole_query();
     }
 
 this.allparams = function() {
@@ -68,12 +69,41 @@ this.allparams = function() {
     data["host"] = this.host;
     data["port"] = this.port;
     data["core"] = this.core;
-    return $.param(data) + "&" + this.query()
+    return $.param(data) + "&" + this.whole_query()
     }
 
+// calculate fqs based on selected facets
 this.query = function() {
+
+    var fqs = [];
+
+    // create a map of facet name to list of values
+    // like... { "server_ti" : [ "host1","host2" ], } 
+    var facet_map = {};
+    $.each($(".ui-selected"),function(i,item){
+        var ffn = item.getAttribute("facet-field-name");
+        var ffv = item.getAttribute("facet-field-value");
+
+        if(facet_map.hasOwnProperty(ffn)) {
+            facet_map[ffn].push(ffv);
+            }
+        else {
+            facet_map[ffn] = [ ffv ];
+            }
+        });
+
+    // fix need special handling for date_dt
+    $.each(facet_map,function(key,list){
+        var myfq=key+":"+"("+list.join(" OR ")+")";
+        fqs.push(myfq);
+        });
+    this.fq = fqs;
+    this.redirect();
+    }
+
+this.whole_query = function() {
     var data = {};
-    data["q"] = "date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
+    data["q"] = this.q;
     data["start"] = this.start;
     data["rows"] = this.rows;
     data["facet"] = this.facet;
@@ -84,10 +114,20 @@ this.query = function() {
 
     var q = $.param(data);
     q = q + "&" + this.flattenlist('facet.field',this.facet_field);
+    q = q + "&" + this.flattenlist('fq',this.fq);
     return q;
     }
 
 this.flattenlist = function(key,list) {
+
+    // wtf... js seems to treat one element lists as strings
+    if (typeof(list)=="string") {
+        // hah, try using { key : list } and key is interpreted as a string!
+        var temp = {};
+        temp[key]=list;
+        return $.param(temp);
+        }
+
     var pieces = [];
     for each (value in list) {
         var mydict = {};
@@ -98,6 +138,7 @@ this.flattenlist = function(key,list) {
     }
 
 this.ajax = function() {
+    console.log(this.fullurl());
     $.ajax({ url : this.fullurl(),
          dataType: "json",
          success: process_json,
@@ -109,7 +150,7 @@ this.redirect = function() {
     var url = window.location+"";
     // remove the query string
     url = url.split("?")[0];
-    window.location = url + "?" + this.allparams(); 
+    window.location = url + "?" + this.allparams();
     }
 
 // no query params means this is first access
@@ -316,7 +357,9 @@ return words.join("_")
 function process_facets(data){
 process_date_facets(data);
 process_facet_fields(data);
-$(".statsblocks").selectable();
+// FIX - this filter requires that you hold down the ctrl key
+// across different statsblocks.  bummer.
+$(".statsblocks").selectable({filter: $(".block-text")});
 }
 
 //----------------------------------------------------------------------------
@@ -441,6 +484,9 @@ function initialize() {
 // global, on purpose.
 ss = new solrsearch();
 
+$("#submit").click(function() {
+    ss.query();
+    });
 
 }
 
