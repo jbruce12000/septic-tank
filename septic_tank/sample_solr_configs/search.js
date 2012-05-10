@@ -13,19 +13,21 @@ for (key in obj) {
 return c;
 }
 
-// for setting div content to grab later from each field
-// $("#date-header").attr("facet-field-name","date_dt");
-// for grabbing needed data
-// $("#date-header").attr("facet-field-name")
-
-// format for solr query...
-//date_dt:([2012-05-06T00:00:00Z TO 2012-05-06T01:00:00Z] OR
-//[2012-05-06T01:00:00Z TO 2012-05-06T02:00:00Z])
-// AND
-// server_ti:(djaapaprd4 OR djaapaprd4.ddtc OR djaapaprd4.ddtc.cmgdigital OR djaapaprd4.ddtc.cmgdigital.com)
-// AND
-// action_t:(head OR option)
-
+//----------------------------------------------------------------------------
+// remove_from_array - removes the given value from an array if it exists
+// inputs
+//     list,value
+// outputs
+//     list
+//----------------------------------------------------------------------------
+function remove_from_array(list,val) {
+if(typeof(list)=="object") {
+    var idx = list.indexOf(val); // Find the index
+    if(idx!=-1) list.splice(idx, 1); // Remove it
+    return list;
+    }
+return list;
+}
 
 //----------------------------------------------------------------------------
 // default_params - object to store default params
@@ -99,6 +101,12 @@ this.query = function() {
         });
     this.fq = fqs;
     this.redirect();
+    }
+
+this.browser_query_string = function() {
+    var data = {};
+    // fix, I need to separate browser query string processing from 
+    // ajax solr query string.
     }
 
 this.whole_query = function() {
@@ -325,7 +333,7 @@ $(".column-field a").click(function() {
     });
 
 // pager link for records header, prev or next
-$(".records-header a").click(function() {
+$(".records-header.pager a").click(function() {
     // remove the leading # 
     var field=this.hash+"";
     field=field.split("=")[1];
@@ -377,10 +385,14 @@ for (field in fields) {
     // FIX - the wrapper for these facets is a problem and jumps down
     // once it fills the screen.
     // these needs to be a clickable X in the corner to close a facet
-    $("#facets").append("<div class=\"facet-wrap\">"+
-        "<div id=\""+field+"-header\" class=\"records-header\">"+remove_field_type(field)+
-        "</div><div id=\""+field+"\" class=\"statsblocks\"></div>"+
-        "</div><!--end facet-wrap-->");
+    // FIX - remove closer X from date, type, and server
+
+    var html = "<div class=\"facet-wrap\">"+
+        "<div id=\""+field+"-header\" class=\"records-header\">"+remove_field_type(field) +
+        "<div class=\"closer\"><a href=\"#close="+field+"-header\">X</a></div>" +
+        "</div><div id=\""+field+"\" class=\"statsblocks\"></div></div>";
+
+    $("#facets").append(html);
 
     var selector = "#"+field;
     var thefield = eval("data.facet_counts.facet_fields" + "." + field);
@@ -393,7 +405,21 @@ for (field in fields) {
         $(selector).append(block(percent,overlay,key,attrs));
         });
     }
+
+// this removes a facet field
+$(".closer a").click(function() {
+   // get everything after =
+    var field=this.hash+"";
+    field=field.split("=")[1];
+    $("#"+field).parent().fadeOut('slow', function() {
+        var ff=field.replace("-header","");
+        ss.facet_field = remove_from_array(ss.facet_field,ff);
+        });
+    });
+
+
 }
+
 //----------------------------------------------------------------------------
 // inputs
 //     data - json object containing solr date facet counts
@@ -484,9 +510,11 @@ function initialize() {
 // global, on purpose.
 ss = new solrsearch();
 
+//fix - need a clear button
 $("#submit").click(function() {
     ss.query();
     });
+
 
 }
 

@@ -30,6 +30,10 @@ tr.even td { background: #CCCCCC; }
 .facets { float: left; }
 .column-field A:link { text-decoration: none; }
 .records-header A:link { text-decoration: none; }
+.closer { border: 1px solid #CCCCCC; float: right; font-family: sans-serif; font-size: 12px; margin: 0px 5px 0px 5px; padding: 0px 2px 0px 2px; }
+.closer A:link { color: #000; text-decoration: none; }
+.closer A:visited { color: #000; text-decoration: none; }
+
 </style>
 
 <body>
@@ -37,7 +41,7 @@ tr.even td { background: #CCCCCC; }
 <button id="submit" type="submit">Submit</button>
 </div>
 <div class="facet-wrap">
-<div id="date-header" class="records-header">Facet Date/Time</div>
+<div id="date-header" class="records-header">Facet Date/Time<div class="closer"><a href="#close=date-header">X</a></div></div>
 <div id="dateblocks" class="statsblocks"></div>
 </div><!--end facet-wrap-->
 
@@ -45,7 +49,7 @@ tr.even td { background: #CCCCCC; }
 <div id="facets" class="facets"></div>
 
 <div id="records-wrapper" class="records-wrapper">
-<div id="records-header" class="records-header"></div>
+<div id="records-header" class="records-header pager"></div>
 <div id="records" class="records atable">Please wait...</div>
 </div><!--end recrds-wrapper-->
 
