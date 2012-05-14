@@ -78,7 +78,6 @@ this.get_facet_selections = function() {
 this.get_facet_map_from_query_string = function() {
     var that = this;
     that.facet_map = {};
-    console.log("get_facet_map_from_query_string"); 
     $.each(that.facet_field,function(i,item) {
         var facet_vals = that.params["fm::"+item];
         if(!facet_vals) {
@@ -87,20 +86,16 @@ this.get_facet_map_from_query_string = function() {
         var vals = facet_vals.split("::");
         that.facet_map[item] = vals;
         });
-    console.log(this.facet_map);
     return
     }
 
 this.set_facet_map_on_page = function() {
     // set the selections for each facet
-    console.log("set_facet_map_on_page"); 
-    console.log(this.facet_map); 
     if (!this.facet_map) {
         return;
         }
     $.each(this.facet_map,function(field,list) {
         $.each(list,function(j,val) {
-            console.log(field,val);
             var selector1 = "'div[facet-field-name=\""+field+"\"]'";
             var selector2 = "'div[facet-field-value=\""+val+"\"]'";
             // FIX - cannot figure out how to get two selectors to work
@@ -132,7 +127,6 @@ this.flatten_fqs_solr = function() {
 // into a string like this...
 // fm::key1=val1::val2::val3&fm::key2=val4::val5
 this.browser_facet_map_to_query_string = function() {
-    console.log(this.facet_map);
     var keystrings = [];
     $.each(this.facet_map,function(key,val){
         keystrings.push("fm::"+key+"="+val.join("::"));
@@ -195,12 +189,11 @@ this.flattenlist = function(key,list) {
         }
 
     var pieces = [];
-    // fix this each is causing an error in chrome
-    for each (value in list) {
+    $.each(list,function(i,value) {
         var mydict = {};
         mydict[key] = value
         pieces.push($.param(mydict));
-        }
+        });
     return pieces.join("&");
     }
 
@@ -212,7 +205,6 @@ this.ajax_success = function(data) {
     }
 
 this.ajax = function() {
-    console.log(this.solrurl());
     $.ajax({ url : this.solrurl(),
          dataType: "json",
          success: this.ajax_success,
