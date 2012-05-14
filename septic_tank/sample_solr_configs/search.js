@@ -37,79 +37,107 @@ function solrsearch() {
 // grab query params from url
 this.params = query_params()
 
-// set defaults if needed
-this.q = this.params["q"] || "*:*";
-this.fq = this.params["fq"] || ["date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]"];
-this.facet_range = this.params["facet.range"] || "date_dt";
-this.facet = this.params["facet"] || "on";
-this.host = this.params["host"] || "virtdev.cei.cox.com";
-this.port = this.params["port"] || "8080";
-this.core = this.params["core"] || "medley";
-this.facet_date_range_start = this.params["f.date_dt.facet.range.start"] || "NOW/HOUR-24HOURS";
-this.facet_date_range_end = this.params["f.date_dt.facet.range.end"] || "NOW/HOUR+2HOURS";
-this.facet_date_range_gap = this.params["f.date_dt.facet.range.gap"] || "+1HOURS";
-this.rows = this.params["rows"] || 20;
-this.start = this.params["start"] || 0;
-this.facet_field = this.params["facet.field"] || ["type_t","server_ti"];
-
-
 this.baseurl = function() {
     return "http://"+this.host+":"+this.port+"/solr/"+this.core+"/select/" +
            "?wt=json&json.wrf=?&json.nl=map&";
     }
 
 this.toString = function() {
-    return this.fullurl();
+    return this.sorlurl();
     }
 
-this.fullurl = function() {
-    return this.baseurl() + this.whole_query();
-    }
-
-this.allparams = function() {
-    var data = {};
-    data["host"] = this.host;
-    data["port"] = this.port;
-    data["core"] = this.core;
-    return $.param(data) + "&" + this.whole_query()
+this.solrurl = function() {
+    return this.baseurl() + this.solr_params();
     }
 
 // calculate fqs based on selected facets
 this.query = function() {
+    this.redirect();
+    }
 
-    var fqs = [];
-
+// get all facet selections from facets
+this.get_facet_selections = function() {
     // create a map of facet name to list of values
     // like... { "server_ti" : [ "host1","host2" ], } 
-    var facet_map = {};
+    var f_map = {};
     $.each($(".ui-selected"),function(i,item){
         var ffn = item.getAttribute("facet-field-name");
         var ffv = item.getAttribute("facet-field-value");
 
-        if(facet_map.hasOwnProperty(ffn)) {
-            facet_map[ffn].push(ffv);
+        if(f_map.hasOwnProperty(ffn)) {
+            f_map[ffn].push(ffv);
             }
         else {
-            facet_map[ffn] = [ ffv ];
+            f_map[ffn] = [ ffv ];
             }
         });
+    return f_map;
+    }
 
+// grab facet map selections from query string
+this.get_facet_map_from_query_string = function() {
+    var that = this;
+    that.facet_map = {};
+    console.log("get_facet_map_from_query_string"); 
+    $.each(that.facet_field,function(i,item) {
+        var facet_vals = that.params["fm::"+item];
+        if(!facet_vals) {
+            return {};
+            }
+        var vals = facet_vals.split("::");
+        that.facet_map[item] = vals;
+        });
+    console.log(this.facet_map);
+    return
+    }
+
+this.set_facet_map_on_page = function() {
+    // set the selections for each facet
+    console.log("set_facet_map_on_page"); 
+    console.log(this.facet_map); 
+    if (!this.facet_map) {
+        return;
+        }
+    $.each(this.facet_map,function(field,list) {
+        $.each(list,function(j,val) {
+            console.log(field,val);
+            var selector1 = "'div[facet-field-name=\""+field+"\"]'";
+            var selector2 = "'div[facet-field-value=\""+val+"\"]'";
+            // FIX - cannot figure out how to get two selectors to work
+            // selector2 is not guaranteed to be unique!
+            $(selector2).addClass("ui-selected");
+            });
+        });
+    }
+
+this.flatten_fqs_solr = function() {
+    this.get_facet_map_from_query_string();
+    fqs = [];
     // fix need special handling for date_dt
-    $.each(facet_map,function(key,list){
-        var myfq=key+":"+"("+list.join(" OR ")+")";
+    $.each(this.facet_map,function(key,list){
+        var myfq="fq="+key+":"+"("+list.join(" OR ")+")";
         fqs.push(myfq);
         });
-    this.fq = fqs;
-    this.redirect();
+    return fqs.join("&");
     }
 
-this.browser_query_string = function() {
-    var data = {};
-    // fix, I need to separate browser query string processing from 
-    // ajax solr query string.
+// this converts a data structure that looks like this...
+// { key1 : [ val1, val2, val3 ], 
+//   key2 : [ val4, val5 ] }
+// into a string like this...
+// fm::key1=val1::val2::val3&fm::key2=val4::val5
+this.browser_facet_map_to_query_string = function() {
+    console.log(this.facet_map);
+    var keystrings = [];
+    $.each(this.facet_map,function(key,val){
+        keystrings.push("fm::"+key+"="+val.join("::"));
+        });
+    return keystrings.join("&"); 
     }
 
-this.whole_query = function() {
+// create query string 
+// these are the same for both browser and ajax solr
+this.easy_query_params = function() {
     var data = {};
     data["q"] = this.q;
     data["start"] = this.start;
@@ -119,10 +147,32 @@ this.whole_query = function() {
     data["f.date_dt.facet.range.start"] = this.facet_date_range_start;
     data["f.date_dt.facet.range.end"] = this.facet_date_range_end;
     data["f.date_dt.facet.range.gap"] = this.facet_date_range_gap;
+    return $.param(data);
+    }
 
-    var q = $.param(data);
+this.solr_params = function() {
+    // browser params depend on this being set
+    this.facet_map = this.get_facet_selections();
+    var q = this.easy_query_params();
     q = q + "&" + this.flattenlist('facet.field',this.facet_field);
-    q = q + "&" + this.flattenlist('fq',this.fq);
+    fqs = this.flatten_fqs_solr();
+    if(fqs) {
+        q = q + "&" + fqs;
+        }
+    return q;
+    }
+
+this.browser_params = function() {
+    // browser params depend on this being set
+    this.facet_map = this.get_facet_selections();
+    var q = this.easy_query_params();
+    var data = {};
+    data["host"] = this.host;
+    data["port"] = this.port;
+    data["core"] = this.core;
+    q = q + "&" + $.param(data);
+    q = q + "&" + this.flattenlist('facet.field',this.facet_field);
+    q = q + "&" + this.browser_facet_map_to_query_string();
     return q;
     }
 
@@ -137,6 +187,7 @@ this.flattenlist = function(key,list) {
         }
 
     var pieces = [];
+    // fix this each is causing an error in chrome
     for each (value in list) {
         var mydict = {};
         mydict[key] = value
@@ -145,11 +196,18 @@ this.flattenlist = function(key,list) {
     return pieces.join("&");
     }
 
+var that = this;
+this.ajax_success = function(data) {
+    process_json(data);
+    that.get_facet_map_from_query_string();
+    that.set_facet_map_on_page();
+    }
+
 this.ajax = function() {
-    console.log(this.fullurl());
-    $.ajax({ url : this.fullurl(),
+    console.log(this.solrurl());
+    $.ajax({ url : this.solrurl(),
          dataType: "json",
-         success: process_json,
+         success: this.ajax_success,
          error: function(xhr,err,text){ alert(err+" and "+text);},
          });
     }
@@ -158,8 +216,25 @@ this.redirect = function() {
     var url = window.location+"";
     // remove the query string
     url = url.split("?")[0];
-    window.location = url + "?" + this.allparams();
+    window.location = url + "?" + this.browser_params();
     }
+
+// set defaults if needed
+this.q = this.params["q"] || "*:*";
+this.fq = this.params["fq"] || ["date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]"];
+this.facet_range = this.params["facet.range"] || "date_dt";
+this.facet = this.params["facet"] || "on";
+this.host = this.params["host"] || "virtdev.cei.cox.com";
+this.port = this.params["port"] || "8080";
+this.core = this.params["core"] || "medley";
+this.facet_date_range_start = this.params["f.date_dt.facet.range.start"] || "NOW/HOUR-24HOURS";
+this.facet_date_range_end = this.params["f.date_dt.facet.range.end"] || "NOW/HOUR+2HOURS";
+this.facet_date_range_gap = this.params["f.date_dt.facet.range.gap"] || "+1HOURS";
+this.rows = this.params["rows"] || 20;
+this.start = this.params["start"] || 0;
+this.facet_field = this.params["facet.field"] || ["type_t","server_ti"];
+this.get_facet_map_from_query_string();
+this.set_facet_map_on_page();
 
 // no query params means this is first access
 if(size(this.params)==0) {
