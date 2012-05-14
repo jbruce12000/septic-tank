@@ -372,14 +372,14 @@ if (typeof(ss.rows)=="string") {
 var prev="<a href=\"#start="+(begin-ss.rows-1)+"\">prev</a>";
 var next="<a href=\"#start="+(begin+ss.rows-1)+"\">next</a>";
 
-// FIX - does not handle end
-if (begin <= 1) {
-    $("#records-header").html("Records "+begin+" - "+end+" of "+total+" "+next);
+var pager_html = "Records "+begin+" - "+end+" of "+total;
+if (begin > 1) {
+    pager_html = prev + " " + pager_html;
     }
-else {
-    $("#records-header").html(prev+" Records "+begin+" - "+end+" of "+total+" "+next);
+if (end < total) {
+    pager_html = pager_html + " " + next;
     }
-    
+$("#records-header").html(pager_html);
 $("#records").empty();
 
 $.each(docs,function(i,doc) {
