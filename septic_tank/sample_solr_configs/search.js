@@ -112,12 +112,17 @@ this.set_facet_map_on_page = function() {
 
 this.flatten_fqs_solr = function() {
     this.get_facet_map_from_query_string();
-    fqs = [];
+    var fqs = [];
+    var data = {};
     // fix need special handling for date_dt
     $.each(this.facet_map,function(key,list){
-        var myfq="fq="+key+":"+"("+list.join(" OR ")+")";
-        fqs.push(myfq);
+        data = {};
+        data["fq"] = key+":"+"("+list.join(" OR ")+")";
+        fqs.push($.param(data));
         });
+    data = {};
+    data["fq"] = this.date_fq;
+    fqs.push($.param(data));
     return fqs.join("&");
     }
 
@@ -154,8 +159,11 @@ this.solr_params = function() {
     // browser params depend on this being set
     this.facet_map = this.get_facet_selections();
     var q = this.easy_query_params();
-    q = q + "&" + this.flattenlist('facet.field',this.facet_field);
-    fqs = this.flatten_fqs_solr();
+    var ff = this.flattenlist('facet.field',this.facet_field);
+    if(ff) {
+        q = q + "&" + ff;
+        }
+    var fqs = this.flatten_fqs_solr();
     if(fqs) {
         q = q + "&" + fqs;
         }
@@ -221,7 +229,7 @@ this.redirect = function() {
 
 // set defaults if needed
 this.q = this.params["q"] || "*:*";
-this.fq = this.params["fq"] || ["date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]"];
+this.date_fq = this.params["date_fq"] || "date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
 this.facet_range = this.params["facet.range"] || "date_dt";
 this.facet = this.params["facet"] || "on";
 this.host = this.params["host"] || "virtdev.cei.cox.com";
