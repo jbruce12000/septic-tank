@@ -51,16 +51,19 @@ class UniqFilter(Filter):
 class ZuluDateFilter(Filter):
     '''
     converts the datetime in the given field[s] from local to Zulu time
-    Any format can be read for inoput, and any format can be produced for
+    Any format can be read for input, and any format can be produced for
     output.
   
     informat = strptime format string for reading your timestamp
     outformat = strptime format string you'd like output to be
+    iszulu = default is False, set to True if the date is already zulu
+        and you just want reformatting capabilities.
     '''
-    def __init__(self,fields=[],informat="%Y-%m-%d %H:%M:%S,%f",outformat="%Y-%m-%dT%H:%M:%SZ"):
+    def __init__(self,fields=[],informat="%Y-%m-%d %H:%M:%S,%f",outformat="%Y-%m-%dT%H:%M:%SZ",iszulu=False):
         Filter.__init__(self,fields=fields)
         self.informat = informat
         self.outformat = outformat
+        self.iszulu = iszulu
 
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
@@ -74,8 +77,12 @@ class ZuluDateFilter(Filter):
         return data
 
     def zulu(self,tstamp):
-        return time.strftime(self.outformat,
-              time.gmtime(time.mktime(time.strptime(tstamp, self.informat))))
+        if self.iszulu:
+            return time.strftime(self.outformat,
+                time.localtime(time.mktime(time.strptime(tstamp, self.informat))))
+        else:
+            return time.strftime(self.outformat,
+                time.gmtime(time.mktime(time.strptime(tstamp, self.informat))))
 
 class GrepFilter(Filter):
     '''

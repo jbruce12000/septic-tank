@@ -139,6 +139,10 @@ class ZuluDateFilterTestCase(TestCase):
         data = z.execute({ 'date' : '2011-01-02 11:24:57,362' })
         self.assertEqual(data['date'],'2011-01-02T16:24:57Z')
 
+        z = ZuluDateFilter(fields=['date'],iszulu=True)
+        data = z.execute({ 'date' : '2011-01-02 11:24:57,362' })
+        self.assertEqual(data['date'],'2011-01-02T11:24:57Z')
+
         z = ZuluDateFilter(fields=['date'],informat ="%Y-%m-%d %H:%M:%S")
         data = z.execute({ 'date' : '2011-01-02 11:24:57' })
         self.assertEqual(data['date'],'2011-01-02T16:24:57Z')
