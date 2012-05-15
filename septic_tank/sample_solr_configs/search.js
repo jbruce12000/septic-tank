@@ -142,6 +142,8 @@ this.easy_query_params = function() {
     data["start"] = this.start;
     data["rows"] = this.rows;
     data["facet"] = this.facet;
+    data["facet.mincount"] = this.facet_mincount;
+    data["f.date_dt.facet.mincount"] = 0;
     data["facet.range"] = this.facet_range;
     data["f.date_dt.facet.range.start"] = this.facet_date_range_start;
     data["f.date_dt.facet.range.end"] = this.facet_date_range_end;
@@ -205,6 +207,7 @@ this.ajax_success = function(data) {
     }
 
 this.ajax = function() {
+    console.log(this.solrurl());
     $.ajax({ url : this.solrurl(),
          dataType: "json",
          success: this.ajax_success,
@@ -224,6 +227,7 @@ this.q = this.params["q"] || "*:*";
 this.date_fq = this.params["date_fq"] || "date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
 this.facet_range = this.params["facet.range"] || "date_dt";
 this.facet = this.params["facet"] || "on";
+this.facet_mincount = this.params["facet.mincount"] || 1;
 this.host = this.params["host"] || "virtdev.cei.cox.com";
 this.port = this.params["port"] || "8080";
 this.core = this.params["core"] || "medley";
@@ -235,6 +239,8 @@ this.start = this.params["start"] || 0;
 this.facet_field = this.params["facet.field"] || ["type_t","server_ti"];
 this.get_facet_map_from_query_string();
 this.set_facet_map_on_page();
+//make facet items count an option
+//could do MLT on fields selected in a record
 
 // no query params means this is first access
 if(size(this.params)==0) {
