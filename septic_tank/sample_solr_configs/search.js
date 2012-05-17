@@ -71,6 +71,17 @@ this.get_facet_selections = function() {
             f_map[ffn] = [ ffv ];
             }
         });
+
+    dates = f_map['date_dt'];
+    // if any dates are selected, lets narrow by them...
+    if(dates) {
+        var oldgap = this.facet_date_range_gap;
+        this.facet_date_range_start = dates[0];
+        this.facet_date_range_end = dates[dates.length-1];
+        this.facet_date_range_gap = this.facet_gap_size(25,dates[0],dates[dates.length-1]);
+        // fix...this is not taking affect...
+        this.date_fq = "["+this.facet_date_range_start+" TO "+this.facet_date_range_end+oldgap+"]";
+        }
     return f_map;
     }
 
@@ -116,7 +127,7 @@ this.flatten_fqs_solr = function() {
         fqs.push($.param(data));
         });
     data = {};
-    data["fq"] = this.date_fq;
+    data["fq"] = "date_dt:" + this.date_fq;
     fqs.push($.param(data));
     return fqs.join("&");
     }
@@ -141,6 +152,7 @@ this.easy_query_params = function() {
     data["q"] = this.q;
     data["start"] = this.start;
     data["rows"] = this.rows;
+    data["date_fq"] = this.date_fq;
     data["facet"] = this.facet;
     data["facet.mincount"] = this.facet_mincount;
     data["f.date_dt.facet.mincount"] = 0;
@@ -199,6 +211,47 @@ this.flattenlist = function(key,list) {
     return pieces.join("&");
     }
 
+
+//----------------------------------------------------------------------------
+// inputs
+//     date string like 2012-05-15T00:00:00Z
+// outputs
+//     unix seconds since 1/1/1970
+//----------------------------------------------------------------------------
+this.unixsecs = function(d) {
+    var dt = new Date(d);
+    if(dt) {
+        return dt.getTime()/1000;
+        }
+    return 0;
+    }
+
+//----------------------------------------------------------------------------
+// ss.facet_gap_size(25,'2012-05-15T00:00:00Z','2012-05-15T00:00:00Z');
+// facet_gap_size
+// inputs 
+//     num_blocks
+//     start date
+//     end date
+// outputs 
+//     gap size in seconds
+//----------------------------------------------------------------------------
+this.facet_gap_size = function(blocks,start_date,end_date) {
+    var map_o_secs = [1,10,30,60,300,600,900,1800,3600,7200,14400,28800,86400,604800];
+
+    var start_s = this.unixsecs(start_date);
+    var end_s = this.unixsecs(end_date);
+    var diff_secs = end_s - start_s;
+    var block_secs = diff_secs/blocks;
+    for(var i=0;i<map_o_secs.length;i++) {
+        if(map_o_secs[i] >= block_secs) {
+            return "+"+map_o_secs[i]+"SECONDS";
+            }
+        }
+    return "+"+map_o_secs[map_o_secs.length-1]+"SECONDS";
+    }
+
+
 var that = this;
 this.ajax_success = function(data) {
     process_json(data);
@@ -224,7 +277,7 @@ this.redirect = function() {
 
 // set defaults if needed
 this.q = this.params["q"] || "*:*";
-this.date_fq = this.params["date_fq"] || "date_dt:[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
+this.date_fq = this.params["date_fq"] || "[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
 this.facet_range = this.params["facet.range"] || "date_dt";
 this.facet = this.params["facet"] || "on";
 this.facet_mincount = this.params["facet.mincount"] || 1;
@@ -239,7 +292,7 @@ this.start = this.params["start"] || 0;
 this.facet_field = this.params["facet.field"] || ["type_t","server_ti"];
 this.get_facet_map_from_query_string();
 this.set_facet_map_on_page();
-//make facet items count an option
+//make facet items count an option (default is 100 for each facet)
 //could do MLT on fields selected in a record
 
 // no query params means this is first access
@@ -394,7 +447,6 @@ $.each(docs,function(i,doc) {
     else { cls="odd"; }
 
     //sort fields alphabetically by name
-    // FIX - each of the fields should be a link to facet on that link
     sorted = sortkeys(doc); 
     for (i in sorted) {
         var key=sorted[i];
@@ -465,7 +517,6 @@ for (field in fields) {
     // add a div for this facet
     // FIX - the wrapper for these facets is a problem and jumps down
     // once it fills the screen.
-    // these needs to be a clickable X in the corner to close a facet
     // FIX - remove closer X from date, type, and server
 
     var html = "<div class=\"facet-wrap\">"+
@@ -596,8 +647,6 @@ $("#submit").click(function() {
     ss.start=0;
     ss.query();
     });
-
-
 }
 
 //----------------------------------------------------------------------------
