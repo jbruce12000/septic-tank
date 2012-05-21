@@ -75,12 +75,17 @@ this.get_facet_selections = function() {
     dates = f_map['date_dt'];
     // if any dates are selected, lets narrow by them...
     if(dates) {
-        var oldgap = this.facet_date_range_gap;
+        var oldgap = this.facet_date_range_gap_secs;
+        this.facet_date_range_gap_secs = this.facet_gap_size(25,dates[0],dates[dates.length-1]);
         this.facet_date_range_start = dates[0];
-        this.facet_date_range_end = dates[dates.length-1];
-        this.facet_date_range_gap = this.facet_gap_size(25,dates[0],dates[dates.length-1]);
+        var endgap = parseInt(oldgap,10) + parseInt(this.facet_date_range_gap_secs,10);
+        this.facet_date_range_end = dates[dates.length-1]+"+"+endgap+"SECONDS";
         // fix...this is not taking affect...
-        this.date_fq = "["+this.facet_date_range_start+" TO "+this.facet_date_range_end+oldgap+"]";
+        // fix remove date_fq param from SOLR params
+      
+        //end_fq_gap = parseInt(oldgap,10) - this.facet_date_range_gap_secs;
+
+        this.date_fq = "["+this.facet_date_range_start+" TO "+dates[dates.length-1]+"+"+oldgap+"SECONDS]";
         }
     return f_map;
     }
@@ -159,7 +164,6 @@ this.easy_query_params = function() {
     data["facet.range"] = this.facet_range;
     data["f.date_dt.facet.range.start"] = this.facet_date_range_start;
     data["f.date_dt.facet.range.end"] = this.facet_date_range_end;
-    data["f.date_dt.facet.range.gap"] = this.facet_date_range_gap;
     return $.param(data);
     }
 
@@ -175,6 +179,9 @@ this.solr_params = function() {
     if(fqs) {
         q = q + "&" + fqs;
         }
+    var data={};
+    data["f.date_dt.facet.range.gap"] = "+" + this.facet_date_range_gap_secs+"SECONDS";
+    q = q + "&" + $.param(data);
     return q;
     }
 
@@ -189,6 +196,10 @@ this.browser_params = function() {
     q = q + "&" + $.param(data);
     q = q + "&" + this.flattenlist('facet.field',this.facet_field);
     q = q + "&" + this.browser_facet_map_to_query_string();
+
+    var data={};
+    data["f.date_dt.facet.range.gap.secs"] = this.facet_date_range_gap_secs;
+    q = q + "&" + $.param(data);
     return q;
     }
 
@@ -240,15 +251,21 @@ this.facet_gap_size = function(blocks,start_date,end_date) {
     var map_o_secs = [1,10,30,60,300,600,900,1800,3600,7200,14400,28800,86400,604800];
 
     var start_s = this.unixsecs(start_date);
-    var end_s = this.unixsecs(end_date);
+    var end_s = 0;
+    if (end_date) {
+        end_s = this.unixsecs(end_date) + this.facet_date_range_gap_secs;
+        }
+    else {
+        end_s = this.unixsecs(start_date) + this.facet_date_range_gap_secs;
+        } 
     var diff_secs = end_s - start_s;
     var block_secs = diff_secs/blocks;
     for(var i=0;i<map_o_secs.length;i++) {
         if(map_o_secs[i] >= block_secs) {
-            return "+"+map_o_secs[i]+"SECONDS";
+            return map_o_secs[i];
             }
         }
-    return "+"+map_o_secs[map_o_secs.length-1]+"SECONDS";
+    return map_o_secs[map_o_secs.length-1];
     }
 
 
@@ -286,7 +303,7 @@ this.port = this.params["port"] || "8080";
 this.core = this.params["core"] || "medley";
 this.facet_date_range_start = this.params["f.date_dt.facet.range.start"] || "NOW/HOUR-24HOURS";
 this.facet_date_range_end = this.params["f.date_dt.facet.range.end"] || "NOW/HOUR+2HOURS";
-this.facet_date_range_gap = this.params["f.date_dt.facet.range.gap"] || "+1HOURS";
+this.facet_date_range_gap_secs = parseInt(this.params["f.date_dt.facet.range.gap.secs"],10) || 3600;
 this.rows = this.params["rows"] || 20;
 this.start = this.params["start"] || 0;
 this.facet_field = this.params["facet.field"] || ["type_t","server_ti"];
@@ -294,6 +311,8 @@ this.get_facet_map_from_query_string();
 this.set_facet_map_on_page();
 //make facet items count an option (default is 100 for each facet)
 //could do MLT on fields selected in a record
+
+// FIX - the date range stuff is not working because f.date_dt.facet.range.end does not contain the %2B3600SECONDS
 
 // no query params means this is first access
 if(size(this.params)==0) {
