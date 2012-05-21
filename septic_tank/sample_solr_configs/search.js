@@ -97,15 +97,10 @@ this.get_facet_selections = function() {
         // this is here so that if someone uses the back button, the last gap
         // is still calculated properly
         oldgap = parseInt(this.params["f.date_dt.facet.range.gap.secs"],10);
-        this.facet_date_range_gap_secs = this.facet_gap_size(25,dates[0],dates[dates.length-1]);
+        this.facet_date_range_gap_secs = this.facet_gap_size(31,dates[0],dates[dates.length-1]);
         this.facet_date_range_start = dates[0];
         var endgap = parseInt(oldgap,10) + parseInt(this.facet_date_range_gap_secs,10);
         this.facet_date_range_end = dates[dates.length-1]+"+"+endgap+"SECONDS";
-        // fix...this is not taking affect...
-        // fix remove date_fq param from SOLR params
-      
-        //end_fq_gap = parseInt(oldgap,10) - this.facet_date_range_gap_secs;
-
         this.date_fq = "["+this.facet_date_range_start+" TO "+dates[dates.length-1]+"+"+oldgap+"SECONDS]";
         }
     return f_map;
@@ -146,7 +141,6 @@ this.flatten_fqs_solr = function() {
     this.get_facet_map_from_query_string();
     var fqs = [];
     var data = {};
-    // fix need special handling for date_dt
     $.each(this.facet_map,function(key,list){
         data = {};
         data["fq"] = key+":"+"("+list.join(" OR ")+")";
@@ -178,7 +172,6 @@ this.easy_query_params = function() {
     data["q"] = this.q;
     data["start"] = this.start;
     data["rows"] = this.rows;
-    data["date_fq"] = this.date_fq;
     data["facet"] = this.facet;
     data["facet.mincount"] = this.facet_mincount;
     data["f.date_dt.facet.mincount"] = 0;
@@ -214,13 +207,11 @@ this.browser_params = function() {
     data["host"] = this.host;
     data["port"] = this.port;
     data["core"] = this.core;
+    data["date_fq"] = this.date_fq;
+    data["f.date_dt.facet.range.gap.secs"] = this.facet_date_range_gap_secs;
     q = q + "&" + $.param(data);
     q = q + "&" + this.flattenlist('facet.field',this.facet_field);
     q = q + "&" + this.browser_facet_map_to_query_string();
-
-    var data={};
-    data["f.date_dt.facet.range.gap.secs"] = this.facet_date_range_gap_secs;
-    q = q + "&" + $.param(data);
     return q;
     }
 
