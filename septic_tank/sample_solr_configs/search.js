@@ -30,9 +30,28 @@ return list;
 }
 
 //----------------------------------------------------------------------------
-// default_params - object to store default params
 //----------------------------------------------------------------------------
 function solrsearch() {
+
+// get needed parameters from url or set sane defaults
+this.set_defaults = function() {
+    this.q = this.params["q"] || "*:*";
+    this.date_fq = this.params["date_fq"] || "[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
+    this.facet_range = this.params["facet.range"] || "date_dt";
+    this.facet = this.params["facet"] || "on";
+    this.facet_mincount = this.params["facet.mincount"] || 1;
+    this.host = this.params["host"] || "virtdev.cei.cox.com";
+    this.port = this.params["port"] || "8080";
+    this.core = this.params["core"] || "medley";
+    this.facet_date_range_start = this.params["f.date_dt.facet.range.start"] || "NOW/HOUR-24HOURS";
+    this.facet_date_range_end = this.params["f.date_dt.facet.range.end"] || "NOW/HOUR+2HOURS";
+    this.facet_date_range_gap_secs = parseInt(this.params["f.date_dt.facet.range.gap.secs"],10) || 3600;
+    this.rows = this.params["rows"] || 20;
+    this.start = this.params["start"] || 0;
+    this.facet_field = this.params["facet.field"] || ["type_t","server_ti"];
+    this.get_facet_map_from_query_string();
+    this.set_facet_map_on_page();
+    }
 
 // grab query params from url
 this.params = query_params()
@@ -75,7 +94,9 @@ this.get_facet_selections = function() {
     dates = f_map['date_dt'];
     // if any dates are selected, lets narrow by them...
     if(dates) {
-        var oldgap = this.facet_date_range_gap_secs;
+        // this is here so that if someone uses the back button, the last gap
+        // is still calculated properly
+        oldgap = parseInt(this.params["f.date_dt.facet.range.gap.secs"],10);
         this.facet_date_range_gap_secs = this.facet_gap_size(25,dates[0],dates[dates.length-1]);
         this.facet_date_range_start = dates[0];
         var endgap = parseInt(oldgap,10) + parseInt(this.facet_date_range_gap_secs,10);
@@ -292,29 +313,7 @@ this.redirect = function() {
     window.location = url + "?" + this.browser_params();
     }
 
-// set defaults if needed
-this.q = this.params["q"] || "*:*";
-this.date_fq = this.params["date_fq"] || "[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
-this.facet_range = this.params["facet.range"] || "date_dt";
-this.facet = this.params["facet"] || "on";
-this.facet_mincount = this.params["facet.mincount"] || 1;
-this.host = this.params["host"] || "virtdev.cei.cox.com";
-this.port = this.params["port"] || "8080";
-this.core = this.params["core"] || "medley";
-this.facet_date_range_start = this.params["f.date_dt.facet.range.start"] || "NOW/HOUR-24HOURS";
-this.facet_date_range_end = this.params["f.date_dt.facet.range.end"] || "NOW/HOUR+2HOURS";
-this.facet_date_range_gap_secs = parseInt(this.params["f.date_dt.facet.range.gap.secs"],10) || 3600;
-this.rows = this.params["rows"] || 20;
-this.start = this.params["start"] || 0;
-this.facet_field = this.params["facet.field"] || ["type_t","server_ti"];
-this.get_facet_map_from_query_string();
-this.set_facet_map_on_page();
-//make facet items count an option (default is 100 for each facet)
-//could do MLT on fields selected in a record
-
-// FIX - the date range stuff is not working because f.date_dt.facet.range.end does not contain the %2B3600SECONDS
-
-// no query params means this is first access
+this.set_defaults();
 if(size(this.params)==0) {
     this.redirect();
     }
