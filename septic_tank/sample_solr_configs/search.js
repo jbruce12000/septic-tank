@@ -30,6 +30,9 @@ return list;
 }
 
 //----------------------------------------------------------------------------
+// FIX - next is a search box drop down of all seen fields, use the luke
+// handler to get that. really slow.  just want field names.
+// FIX - add date choosers
 //----------------------------------------------------------------------------
 function solrsearch() {
 
@@ -450,20 +453,35 @@ if (end < total) {
 $("#records-header").html(pager_html);
 $("#records").empty();
 
+var fields = {};
 $.each(docs,function(i,doc) {
+
     var cls="";
     if (i % 2 == 0) { cls="even"; }
     else { cls="odd"; }
 
     //sort fields alphabetically by name
-    sorted = sortkeys(doc); 
+    var sorted = sortkeys(doc); 
     for (i in sorted) {
         var key=sorted[i];
         var value=doc[key];
         field=remove_field_type(key);
+        fields[field] = key;
         $("#records").append("<div class=\"row "+cls+"\"><div class=\"column-field\"><a href=\"#"+key+"\">"+field+"</a></div><div class=\"column-value\">"+value+"</div></div>");
         }
     });
+
+// add all fields to the fields dropdown in the form
+$('#search-field option').remove();
+var sorted = sortkeys(fields);
+for (i in sorted) {
+    var key=sorted[i];
+    var value=fields[key];
+    $('#search-field').append($("<option/>", {
+        value: value,
+        text: key 
+        }));
+    }
 
 // this adds a new facet field
 $(".column-field a").click(function() {
@@ -656,6 +674,20 @@ $("#submit").click(function() {
     ss.start=0;
     ss.query();
     });
+
+$("#start").datetimepicker({
+    showSecond: true,
+    timeFormat: 'hh:mm:ss',
+    dateFormat: 'yy-mm-dd',
+    });
+
+$("#end").datetimepicker({
+    showSecond: true,
+    timeFormat: 'hh:mm:ss',
+    dateFormat: 'yy-mm-dd',
+    });
+
+
 }
 
 //----------------------------------------------------------------------------
