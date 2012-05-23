@@ -38,7 +38,6 @@ function solrsearch() {
 
 // get needed parameters from url or set sane defaults
 this.set_defaults = function() {
-    this.q = this.params["q"] || "*:*";
     this.date_fq = this.params["date_fq"] || "[NOW/HOUR-24HOURS TO NOW/HOUR+2HOURS]";
     this.facet_range = this.params["facet.range"] || "date_dt";
     this.facet = this.params["facet"] || "on";
@@ -52,6 +51,8 @@ this.set_defaults = function() {
     this.rows = this.params["rows"] || 20;
     this.start = this.params["start"] || 0;
     this.facet_field = this.params["facet.field"] || ["type_t","server_ti"];
+    this.search_for = this.params["search-for"];
+    this.search_field = this.params["search-field"];
     this.get_facet_map_from_query_string();
     this.set_facet_map_on_page();
     }
@@ -172,10 +173,6 @@ this.browser_facet_map_to_query_string = function() {
 // these are the same for both browser and ajax solr
 this.easy_query_params = function() {
     var data = {};
-    data["q"] = this.q;
-    if ($("#search-field").val() && $("#search-for").val()) {
-        data["q"] = $("#search-field").val() + ":" + $("#search-for").val();
-        }
     data["start"] = this.start;
     data["rows"] = this.rows;
     data["facet"] = this.facet;
@@ -200,6 +197,10 @@ this.solr_params = function() {
         q = q + "&" + fqs;
         }
     var data={};
+    data["q"] = "*:*";
+    if (this.search_field && this.search_for) {
+        data["q"] = this.search_field + ":" + this.search_for;
+        }
     data["f.date_dt.facet.range.gap"] = "+" + this.facet_date_range_gap_secs+"SECONDS";
     q = q + "&" + $.param(data);
     return q;
@@ -214,6 +215,12 @@ this.browser_params = function() {
     data["port"] = this.port;
     data["core"] = this.core;
     data["date_fq"] = this.date_fq;
+    if ($("#search-field").val()) {
+        data["search-field"] = $("#search-field").val();
+        }
+    if ($("#search-for").val()) {
+        data["search-for"] = $("#search-for").val();
+        }
     data["f.date_dt.facet.range.gap.secs"] = this.facet_date_range_gap_secs;
     q = q + "&" + $.param(data);
     q = q + "&" + this.flattenlist('facet.field',this.facet_field);
@@ -484,6 +491,13 @@ for (i in sorted) {
         value: value,
         text: key 
         }));
+    }
+
+if (ss.search_field) {
+    $("#search-field").val(ss.search_field);
+    }
+if (ss.search_for) {
+    $("#search-for").val(ss.search_for);
     }
 
 // this adds a new facet field
