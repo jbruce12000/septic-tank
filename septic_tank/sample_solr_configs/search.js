@@ -173,6 +173,9 @@ this.browser_facet_map_to_query_string = function() {
 this.easy_query_params = function() {
     var data = {};
     data["q"] = this.q;
+    if ($("#search-field").val() && $("#search-for").val()) {
+        data["q"] = $("#search-field").val() + ":" + $("#search-for").val();
+        }
     data["start"] = this.start;
     data["rows"] = this.rows;
     data["facet"] = this.facet;
