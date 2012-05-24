@@ -60,6 +60,19 @@ this.set_defaults = function() {
 // grab query params from url
 this.params = query_params()
 
+//----------------------------------------------------------------------------
+// convert a local time string to a zulu time string
+// input
+//     string "2012-05-23 15:43:26"
+// output
+//     string "2012-05-23T19:43:26Z"
+//----------------------------------------------------------------------------
+this.local_to_zulu = function(d) {
+    d = d.replace(" ","T");
+    dt = new Date(d);
+    return dt.toISOString();
+    }
+
 this.baseurl = function() {
     return "http://"+this.host+":"+this.port+"/solr/"+this.core+"/select/" +
            "?wt=json&json.wrf=?&json.nl=map&";
@@ -94,20 +107,22 @@ this.get_facet_selections = function() {
             f_map[ffn] = [ ffv ];
             }
         });
+    return f_map;
+    }
 
-    dates = f_map['date_dt'];
-    // if any dates are selected, lets narrow by them...
-    if(dates) {
+this.prepare_date_params = function() {
+    var start = $("#start").attr("zulu");
+    var end = $("#end").attr("zulu");
+    if(start && end) {
         // this is here so that if someone uses the back button, the last gap
         // is still calculated properly
         oldgap = parseInt(this.params["f.date_dt.facet.range.gap.secs"],10);
-        this.facet_date_range_gap_secs = this.facet_gap_size(31,dates[0],dates[dates.length-1]);
-        this.facet_date_range_start = dates[0];
+        this.facet_date_range_gap_secs = this.facet_gap_size(31,start,end);
+        this.facet_date_range_start = start;
         var endgap = parseInt(oldgap,10) + parseInt(this.facet_date_range_gap_secs,10);
-        this.facet_date_range_end = dates[dates.length-1]+"+"+endgap+"SECONDS";
-        this.date_fq = "["+this.facet_date_range_start+" TO "+dates[dates.length-1]+"+"+oldgap+"SECONDS]";
+        this.facet_date_range_end = end+"+"+endgap+"SECONDS";
+        this.date_fq = "["+start+" TO "+end+"+"+oldgap+"SECONDS]";
         }
-    return f_map;
     }
 
 // grab facet map selections from query string
@@ -172,6 +187,8 @@ this.browser_facet_map_to_query_string = function() {
 // create query string 
 // these are the same for both browser and ajax solr
 this.easy_query_params = function() {
+    this.facet_map = this.get_facet_selections();
+    this.prepare_date_params();
     var data = {};
     data["start"] = this.start;
     data["rows"] = this.rows;
@@ -185,8 +202,6 @@ this.easy_query_params = function() {
     }
 
 this.solr_params = function() {
-    // browser params depend on this being set
-    this.facet_map = this.get_facet_selections();
     var q = this.easy_query_params();
     var ff = this.flattenlist('facet.field',this.facet_field);
     if(ff) {
@@ -207,8 +222,6 @@ this.solr_params = function() {
     }
 
 this.browser_params = function() {
-    // browser params depend on this being set
-    this.facet_map = this.get_facet_selections();
     var q = this.easy_query_params();
     var data = {};
     data["host"] = this.host;
@@ -250,7 +263,7 @@ this.flattenlist = function(key,list) {
 
 //----------------------------------------------------------------------------
 // inputs
-//     date string like 2012-05-15T00:00:00Z
+//     date string in zulu time like "2012-05-23T00:03:27Z"
 // outputs
 //     unix seconds since 1/1/1970
 //----------------------------------------------------------------------------
@@ -263,12 +276,12 @@ this.unixsecs = function(d) {
     }
 
 //----------------------------------------------------------------------------
-// ss.facet_gap_size(25,'2012-05-15T00:00:00Z','2012-05-15T00:00:00Z');
+// ss.facet_gap_size(25,start,end);
 // facet_gap_size
 // inputs 
 //     num_blocks
-//     start date
-//     end date
+//     start date like "2012-05-23T00:03:27Z"
+//     end date like above
 // outputs 
 //     gap size in seconds
 //----------------------------------------------------------------------------
@@ -544,7 +557,23 @@ process_date_facets(data);
 process_facet_fields(data);
 // FIX - this filter requires that you hold down the ctrl key
 // across different statsblocks.  bummer.
-$(".statsblocks").selectable({filter: $(".block-text")});
+$(".statsblocks").selectable({filter: $(".block-text"),
+    selected: function(event, ui) {
+        // this updates the start and end input boxes to times selected
+        // in the date facet
+        // FIX hardcoded ss
+        var fmap = ss.get_facet_selections();
+        dates = fmap['date_dt'];
+        if(dates) {
+            var start_dt=new Date(dates[0]);
+            var end_dt=new Date(dates[dates.length-1]);
+            $("#start").val(neat_time(start_dt));
+            $("#start").attr("zulu",dates[0]);
+            $("#end").val(neat_time(end_dt));
+            $("#end").attr("zulu",dates[dates.length-1]);
+            }
+        }
+    });
 }
 
 //----------------------------------------------------------------------------
@@ -704,6 +733,14 @@ $("#end").datetimepicker({
     dateFormat: 'yy-mm-dd',
     });
 
+// convert local time to zulu time for these inputs
+$("#start").change(function() {
+    $("#start").attr("zulu",ss.local_to_zulu($("#start").val()));
+    });
+
+$("#end").change(function() {
+    $("#end").attr("zulu",ss.local_to_zulu($("#end").val()));
+    });
 
 }
 
