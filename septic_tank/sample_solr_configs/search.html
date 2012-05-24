@@ -27,7 +27,7 @@ tr.even td { background: #CCCCCC; }
 .atable { display: table; width: 100%; }
 .ftable { display: table; }
 .row  { display: table-row; }
-.column { display: table-cell; }
+.column { display: table-cell; padding: 0px 2px 0px 2px; }
 .even { background: #CCCCCC; }
 .column-field,.column-value { display: table-cell; }
 .column-value { display: table-cell; white-space: pre; }
@@ -52,6 +52,9 @@ div.ui-datepicker{ font-size: 11px; }
 
 <body>
 <div class="ftable" class="form">
+<div class="row">
+  <div class="column">
+
 <div class="row">
   <div class="column"><div class="label">Search Field:</div></div>
   <div id="search-field-wrap">
@@ -80,10 +83,33 @@ div.ui-datepicker{ font-size: 11px; }
   <div class="column"><button id="submit" type="submit">Submit</button></div>
 </div><!--end row-->
 
+</div><!--end column-->
+<div class="column">
+
+<div class="row">
+  <div class="column"><div class="label">Host:</div></div>
+  <div class="column"><input id="host" name="host"></input></div>
+</div><!--end row-->
+
+<div class="row">
+  <div class="column"><div class="label">Port:</div></div>
+  <div class="column"><input id="port" name="port"></input></div>
+</div><!--end row-->
+
+<div class="row">
+  <div class="column"><div class="label">Core:</div></div>
+  <div class="column"><input id="core" name="core"></input></div>
+</div><!--end row-->
+
+
+</div><!--end column-->
+</div><!--end row-->
+
 </div><!--end form-->
+<br/>
 
 <div class="facet-wrap">
-<div id="date-header" class="records-header">Facet Date/Time<div class="closer"><a href="#close=date-header">X</a></div></div>
+<div id="date-header" class="records-header">Date/Time<div class="closer"><a href="#close=date-header">X</a></div></div>
 <div id="dateblocks" class="statsblocks"></div>
 </div><!--end facet-wrap-->
 

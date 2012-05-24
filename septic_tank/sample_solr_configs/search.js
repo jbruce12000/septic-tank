@@ -224,9 +224,9 @@ this.solr_params = function() {
 this.browser_params = function() {
     var q = this.easy_query_params();
     var data = {};
-    data["host"] = this.host;
-    data["port"] = this.port;
-    data["core"] = this.core;
+    data["host"] = $("#host").val();
+    data["port"] = $("#port").val();
+    data["core"] = $("#core").val();
     data["date_fq"] = this.date_fq;
     if ($("#search-field").val()) {
         data["search-field"] = $("#search-field").val();
@@ -741,6 +741,12 @@ $("#start").change(function() {
 $("#end").change(function() {
     $("#end").attr("zulu",ss.local_to_zulu($("#end").val()));
     });
+
+// set values for inputs
+$("#host").val(ss.host);
+$("#port").val(ss.port);
+$("#core").val(ss.core);
+
 
 }
 
