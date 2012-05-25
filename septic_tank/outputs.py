@@ -3,6 +3,7 @@ from pysolr import Solr
 import json
 import logging
 import sys
+import time
 import zmq
 
 class Output(Pipe):
@@ -135,6 +136,7 @@ class SOLROutput(Output):
             # written.
             logging.error('solr cache size: %d' % len(self.solrcache))
             logging.error('solr add error: %s' % str(err))
+            time.sleep(1);
             return None 
 
     def __del__(self):
