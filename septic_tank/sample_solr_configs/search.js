@@ -689,6 +689,16 @@ this.redirect = function() {
     window.location = url + "?" + this.browser_params();
     }
 
+//----------------------------------------------------------------------------
+// clear all parameters and start over clean
+//----------------------------------------------------------------------------
+this.clear = function() {
+    var url = window.location+"";
+    // remove the query string
+    url = url.split("?")[0];
+    window.location = url;
+    }
+
 this.set_defaults();
 if(size(this.params)==0) {
     this.redirect();
@@ -714,6 +724,10 @@ ss = new solrsearch();
 $("#submit").click(function() {
     ss.start=0;
     ss.query();
+    });
+
+$("#clear").click(function() {
+    ss.clear();
     });
 
 $("#start").datetimepicker({
