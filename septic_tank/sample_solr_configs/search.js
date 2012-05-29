@@ -30,9 +30,164 @@ return list;
 }
 
 //----------------------------------------------------------------------------
-// FIX - next is a search box drop down of all seen fields, use the luke
-// handler to get that. really slow.  just want field names.
-// FIX - add date choosers
+// max_dict - reads keys and returns the largest value
+// inputs
+//     dict - keys don't matter, values must be integers
+// outputs
+//     largest value
+//----------------------------------------------------------------------------
+function max_dict(dict){
+var max=0
+$.each(dict,function(key,value) {
+    if(value>max) { max=value; }
+    });
+return max;
+}
+
+//----------------------------------------------------------------------------
+// input
+//     integer
+// output
+//     zero padded string
+function addZero(i) {
+if (i<10) { i="0" + i; }
+return i;
+}
+
+//----------------------------------------------------------------------------
+// inputs
+//     dict
+// outputs
+//     list of sorted keys
+function sortkeys(dict) {
+var keys = [];
+    for (var key in dict) {
+      if (dict.hasOwnProperty(key)) {
+        keys.push(key);
+      }
+    }
+    keys.sort();
+return keys
+}
+
+//----------------------------------------------------------------------------
+// input
+//    date 
+// output
+//    string yyyy-mm-dd hh:mm:ss in local time
+function neat_time(d) {
+return d.getFullYear()+"-"+addZero(d.getMonth()+1)+"-"+addZero(d.getDate())+" "+
+       addZero(d.getHours())+":"+addZero(d.getMinutes())+":"+
+       addZero(d.getSeconds())
+}
+
+//----------------------------------------------------------------------------
+// query_params
+// inputs
+//    window.location url
+// outputs
+//    dict of query params to values
+//----------------------------------------------------------------------------
+function query_params() {
+var urlParams = {};
+var e,
+    a = /\+/g,  // Regex for replacing addition symbol with a space
+    r = /([^&=]+)=?([^&]*)/g,
+    d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
+    q = window.location.search.substring(1);
+
+while (e = r.exec(q)) {
+    key = d(e[1]);
+    value = d(e[2]);
+
+    // if the same key exists multiple times, add it to an array
+    // solr has this with facet.field for instance
+    if(urlParams.hasOwnProperty(key)) {
+        if(typeof urlParams[key] == "object") {
+            urlParams[key].push(value);
+            }
+        else {
+            urlParams[key] = [ urlParams[key], value ];
+            }
+        }
+    else {
+        urlParams[key] = value;
+        }
+    }
+return urlParams;
+}
+
+
+//----------------------------------------------------------------------------
+// block
+// inputs
+//     percent, integer 0-100
+//     overylaytext char - will overlay block
+//     text char - will be to the right of block
+//     attrs - dict of keys/values to be added to the block-text div
+// outputs
+//     html representation of a block
+//----------------------------------------------------------------------------
+function block(percent,overlaytext,text,attrs) {
+
+var kvps=flatten_attrs(attrs);
+
+var html="<div class=\"block-wrap\">\n" +
+    "<div class=\"block\">\n" +
+    "<div class=\"block-overlay-text\">"+overlaytext+"</div>\n" +
+    "<div class=\"block-left\" style=\"width:" +
+    (100-percent) + "%\"></div>\n" +
+    "<div class=\"block-right\" style=\"width:" +
+    percent + "%\"></div>\n" +
+    "</div><!--end block-->\n" +
+    "<div "+kvps+" class=\"block-text\">" +
+    text + "</div>\n" +
+    "</div><!--end block-wrap-->\n";
+return html
+} // end block
+
+//----------------------------------------------------------------------------
+// flatten_attrs
+// input
+//    dict
+// output
+//    string "key1=val1 key2=val2..."
+//----------------------------------------------------------------------------
+function flatten_attrs(attrs){
+if(!attrs) { return ""; }
+var kvps=[];
+$.each(attrs,function(key,value) {
+    kvps.push(key+"="+"\""+value+"\"");
+    });
+return kvps.join(" ");
+}
+
+//----------------------------------------------------------------------------
+// input
+//     integer
+// output
+//     commified string
+//----------------------------------------------------------------------------
+function commify(num) {
+        if(typeof(num) == "number") {
+            nStr = num.toString();
+            }
+        else {
+            nStr = num
+            }
+        nStr += '';
+        x = nStr.split('.');
+        x1 = x[0];
+        x2 = x.length > 1 ? '.' + x[1] : '';
+        var rgx = /(\d+)(\d{3})/;
+        while (rgx.test(x1)) {
+                x1 = x1.replace(rgx, '$1' + ',' + '$2');
+        }
+        return x1 + x2;
+}
+
+
+//----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 function solrsearch() {
 
@@ -307,6 +462,7 @@ this.facet_gap_size = function(blocks,start_date,end_date) {
     }
 
 
+//----------------------------------------------------------------------------
 var that = this;
 this.ajax_success = function(data) {
     process_json(data);
@@ -314,6 +470,7 @@ this.ajax_success = function(data) {
     that.set_facet_map_on_page();
     }
 
+//----------------------------------------------------------------------------
 this.ajax = function() {
     console.log(this.solrurl());
     $.ajax({ url : this.solrurl(),
@@ -323,6 +480,7 @@ this.ajax = function() {
          });
     }
 
+//----------------------------------------------------------------------------
 this.redirect = function() {
     var url = window.location+"";
     // remove the query string
@@ -341,109 +499,10 @@ else {
 
 
 //----------------------------------------------------------------------------
-// query_params
-// inputs
-//    window.location url
-// outputs
-//    dict of query params to values
-//----------------------------------------------------------------------------
-function query_params() {
-var urlParams = {};
-var e,
-    a = /\+/g,  // Regex for replacing addition symbol with a space
-    r = /([^&=]+)=?([^&]*)/g,
-    d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
-    q = window.location.search.substring(1);
-
-while (e = r.exec(q)) {
-    key = d(e[1]);
-    value = d(e[2]);
-
-    // if the same key exists multiple times, add it to an array
-    // solr has this with facet.field for instance
-    if(urlParams.hasOwnProperty(key)) {
-        if(typeof urlParams[key] == "object") {
-            urlParams[key].push(value);
-            }
-        else {
-            urlParams[key] = [ urlParams[key], value ];
-            } 
-        }
-    else {
-        urlParams[key] = value;
-        }
-    }
-return urlParams;
-}
-
-
-
-//----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 function process_json(data) {
 process_facets(data)
 process_docs(data)
-}
-
-//----------------------------------------------------------------------------
-// input
-//     integer
-// output
-//     commified string
-//----------------------------------------------------------------------------
-function commify(num) {
-        if(typeof(num) == "number") {
-            nStr = num.toString();
-            } 
-        else {
-            nStr = num
-            }
-	nStr += '';
-	x = nStr.split('.');
-	x1 = x[0];
-	x2 = x.length > 1 ? '.' + x[1] : '';
-	var rgx = /(\d+)(\d{3})/;
-	while (rgx.test(x1)) {
-		x1 = x1.replace(rgx, '$1' + ',' + '$2');
-	}
-	return x1 + x2;
-}
-
-//----------------------------------------------------------------------------
-// input
-//     integer
-// output
-//     zero padded string
-function addZero(i) {
-if (i<10) { i="0" + i; }
-return i;
-}
-
-//----------------------------------------------------------------------------
-// input
-//    date 
-// output
-//    string yyyy-mm-dd hh:mm:ss in local time
-function neat_time(d) {
-return d.getFullYear()+"-"+addZero(d.getMonth()+1)+"-"+addZero(d.getDate())+" "+
-       addZero(d.getHours())+":"+addZero(d.getMinutes())+":"+
-       addZero(d.getSeconds())
-}
-
-//----------------------------------------------------------------------------
-// inputs
-//     dict
-// outputs
-//     list of sorted keys
-function sortkeys(dict) {
-var keys = [];
-    for (var key in dict) {
-      if (dict.hasOwnProperty(key)) {
-        keys.push(key);
-      }
-    }
-    keys.sort();
-return keys
 }
 
 //----------------------------------------------------------------------------
@@ -646,65 +705,6 @@ $.each(dates,function(key, value) {
 }
 
 //----------------------------------------------------------------------------
-// max_dict - reads keys and returns the largest value
-// inputs
-//     dict - keys don't matter, values must be integers
-// outputs
-//     largest value
-//----------------------------------------------------------------------------
-function max_dict(dict){
-var max=0
-$.each(dict,function(key,value) {
-    if(value>max) { max=value; }
-    });
-return max;
-}
-
-//----------------------------------------------------------------------------
-// flatten_attrs
-// input
-//    dict
-// output
-//    string "key1=val1 key2=val2..."
-//----------------------------------------------------------------------------
-function flatten_attrs(attrs){
-if(!attrs) { return ""; }
-var kvps=[];
-$.each(attrs,function(key,value) {
-    kvps.push(key+"="+"\""+value+"\"");
-    });
-return kvps.join(" ");
-}
-
-//----------------------------------------------------------------------------
-// block
-// inputs
-//     percent, integer 0-100
-//     overylaytext char - will overlay block
-//     text char - will be to the right of block
-//     attrs - dict of keys/values to be added to the block-text div
-// outputs
-//     html representation of a block
-//----------------------------------------------------------------------------
-function block(percent,overlaytext,text,attrs) {
-
-var kvps=flatten_attrs(attrs);
-
-var html="<div class=\"block-wrap\">\n" +
-    "<div class=\"block\">\n" +
-    "<div class=\"block-overlay-text\">"+overlaytext+"</div>\n" +
-    "<div class=\"block-left\" style=\"width:" +
-    (100-percent) + "%\"></div>\n" +
-    "<div class=\"block-right\" style=\"width:" +
-    percent + "%\"></div>\n" +
-    "</div><!--end block-->\n" +
-    "<div "+kvps+" class=\"block-text\">" +
-    text + "</div>\n" +
-    "</div><!--end block-wrap-->\n";
-return html
-} // end block
-
-//----------------------------------------------------------------------------
 // initialize - initialize query parameters, handle start-up tasks for page
 // inputs
 //     none
@@ -733,7 +733,6 @@ $("#end").datetimepicker({
     dateFormat: 'yy-mm-dd',
     });
 
-// convert local time to zulu time for these inputs
 $("#start").change(function() {
     $("#start").attr("zulu",ss.local_to_zulu($("#start").val()));
     });
