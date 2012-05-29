@@ -431,7 +431,7 @@ this.unixsecs = function(d) {
     }
 
 //----------------------------------------------------------------------------
-// ss.facet_gap_size(25,start,end);
+// this.facet_gap_size(25,start,end);
 // facet_gap_size
 // inputs 
 //     num_blocks
@@ -461,11 +461,212 @@ this.facet_gap_size = function(blocks,start_date,end_date) {
     return map_o_secs[map_o_secs.length-1];
     }
 
+//----------------------------------------------------------------------------
+// inputs
+//     field - solr field name like date_dt
+// outputs
+//     string with the final underscore and type removed
+//----------------------------------------------------------------------------
+this.remove_field_type = function(field) {
+    words=field.split("_");
+    if(words.length > 1){
+        words=words.slice(0,words.length-1);
+        }
+    return words.join("_")
+    }
+
+//----------------------------------------------------------------------------
+// inputs
+//     data - json object containing solr date facet counts
+// outputs
+//
+//----------------------------------------------------------------------------
+var that = this;
+this.process_facets = function(data) {
+    that.process_date_facets(data);
+    that.process_facet_fields(data);
+    // FIX - this filter requires that you hold down the ctrl key
+    // across different statsblocks.  bummer.
+    $(".statsblocks").selectable({filter: $(".block-text"),
+        selected: function(event, ui) {
+            // this updates the start and end input boxes to times selected
+            // in the date facet
+            // FIX - this might need to be that!
+            var fmap = that.get_facet_selections();
+            dates = fmap['date_dt'];
+            if(dates) {
+                var start_dt=new Date(dates[0]);
+                var end_dt=new Date(dates[dates.length-1]);
+                $("#start").val(neat_time(start_dt));
+                $("#start").attr("zulu",dates[0]);
+                $("#end").val(neat_time(end_dt));
+                $("#end").attr("zulu",dates[dates.length-1]);
+                }
+            }
+        });
+    }
+
+//----------------------------------------------------------------------------
+// inputs
+//     data - solr json object 
+// outputs
+//     html for each facet field
+//----------------------------------------------------------------------------
+var that = this;
+this.process_facet_fields = function(data) {
+    $("#facets").empty();
+    var fields = data.facet_counts.facet_fields;
+    for (field in fields) {
+        var html = "<div class=\"facet-wrap\">"+
+            "<div id=\""+field+"-header\" class=\"records-header\">"+that.remove_field_type(field) +
+            "<div class=\"closer\"><a href=\"#close="+field+"-header\">X</a></div>" +
+            "</div><div id=\""+field+"\" class=\"statsblocks\"></div></div>";
+
+        $("#facets").append(html);
+
+        var selector = "#"+field;
+        //FIX - eval, really?
+        var thefield = eval("data.facet_counts.facet_fields" + "." + field);
+        var max = max_dict(thefield);
+        $.each(thefield,function(key,value) {
+            var percent = Math.floor(value/max*100)
+            var overlay = commify(value)
+            var attrs = { "facet-field-name" : field,
+                          "facet-field-value" : key };
+            $(selector).append(block(percent,overlay,key,attrs));
+            });
+        }
+
+    // this removes a facet field
+    $(".closer a").click(function() {
+       // get everything after =
+        var field = this.hash+"";
+        field = field.split("=")[1];
+        $("#"+field).parent().fadeOut('slow', function() {
+            var ff = field.replace("-header","");
+            that.facet_field = remove_from_array(that.facet_field,ff);
+            });
+        });
+    }
+
+//----------------------------------------------------------------------------
+// inputs
+//     data - json object containing solr date facet counts
+// outputs
+//     adds the html for each date block to the dom
+//----------------------------------------------------------------------------
+this.process_date_facets = function(data) {
+    var dates = data.facet_counts.facet_ranges.date_dt.counts;
+    var max = max_dict(dates);
+    $('#dateblocks').empty()
+    $.each(dates,function(key, value) {
+        var attrs={ "facet-field-name" : "date_dt",
+                    "facet-field-value" : key };
+        percent = Math.floor(value/max*100);
+        var dt = new Date(key);
+        overlay = commify(value);
+        $("#dateblocks").append(block(percent,overlay,neat_time(dt),attrs));
+        });
+    }
+
+var that = this;
+//----------------------------------------------------------------------------
+// inputs
+//     data - json object containing solr docs
+// outputs
+//     html - to the records div
+this.process_docs = function(data) {
+    var docs = data.response.docs;
+    var begin = data.response.start;
+    var end = data.response.docs.length+begin;
+    begin = begin + 1;
+    var total = data.response.numFound;
+
+    // paging...
+    if (typeof(that.rows)=="string") {
+        that.rows = parseInt(that.rows);
+        }
+
+    var prev="<a href=\"#start="+(begin - that.rows - 1)+"\">prev</a>";
+    var next="<a href=\"#start="+(begin + that.rows - 1)+"\">next</a>";
+
+    var pager_html = "Records "+begin+" - "+end+" of "+total;
+    if (begin > 1) {
+        pager_html = prev + " " + pager_html;
+        }
+    if (end < total) {
+        pager_html = pager_html + " " + next;
+        }
+    $("#records-header").html(pager_html);
+    $("#records").empty();
+
+    var fields = {};
+    $.each(docs,function(i,doc) {
+
+        // even / odd record coloring
+        var cls="";
+        if (i % 2 == 0) { cls="even"; }
+        else { cls="odd"; }
+
+        //sort fields alphabetically by name
+        var sorted = sortkeys(doc);
+        for (i in sorted) {
+            var key = sorted[i];
+            var value = doc[key];
+            field = that.remove_field_type(key);
+            fields[field] = key;
+            $("#records").append("<div class=\"row "+cls+"\"><div class=\"column-field\"><a href=\"#"+key+"\">"+field+"</a></div><div class=\"column-value\">"+value+"</div></div>");
+            }
+        });
+
+    // add all fields to the fields dropdown in the form
+    $('#search-field option').remove();
+    var sorted = sortkeys(fields);
+    for (i in sorted) {
+        var key = sorted[i];
+        var value = fields[key];
+        $('#search-field').append($("<option/>", {
+            value: value,
+            text: key
+            }));
+        }
+
+    if (that.search_field) {
+        $("#search-field").val(that.search_field);
+        }
+    if (that.search_for) {
+        $("#search-for").val(that.search_for);
+        }
+
+    // this adds a new facet field
+    $(".column-field a").click(function() {
+        // remove the leading # 
+        var field = this.hash+"";
+        field = field.split("#")[1];
+        that.facet_field.push(field);
+        that.redirect();
+        });
+
+    // pager link for records header, prev or next
+    $(".records-header.pager a").click(function() {
+        // remove the leading # 
+        var field = this.hash + "";
+        field = field.split("=")[1];
+        that.start = field;
+        that.redirect();
+        });
+    } // end process_docs
+
+//----------------------------------------------------------------------------
+this.process_json = function(data) {
+    this.process_facets(data);
+    this.process_docs(data);
+    }
 
 //----------------------------------------------------------------------------
 var that = this;
 this.ajax_success = function(data) {
-    process_json(data);
+    that.process_json(data);
     that.get_facet_map_from_query_string();
     that.set_facet_map_on_page();
     }
@@ -497,212 +698,6 @@ else {
     }
 }
 
-
-//----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
-function process_json(data) {
-process_facets(data)
-process_docs(data)
-}
-
-//----------------------------------------------------------------------------
-// inputs
-//     data - json object containing solr docs
-// outputs
-//     html - to the records div
-function process_docs(data){
-var docs=data.response.docs;
-var begin=data.response.start;
-var end=data.response.docs.length+begin;
-begin=begin+1;
-var total=data.response.numFound;
-
-// paging...
-if (typeof(ss.rows)=="string") {
-    ss.rows = parseInt(ss.rows);
-    }
-
-var prev="<a href=\"#start="+(begin-ss.rows-1)+"\">prev</a>";
-var next="<a href=\"#start="+(begin+ss.rows-1)+"\">next</a>";
-
-var pager_html = "Records "+begin+" - "+end+" of "+total;
-if (begin > 1) {
-    pager_html = prev + " " + pager_html;
-    }
-if (end < total) {
-    pager_html = pager_html + " " + next;
-    }
-$("#records-header").html(pager_html);
-$("#records").empty();
-
-var fields = {};
-$.each(docs,function(i,doc) {
-
-    var cls="";
-    if (i % 2 == 0) { cls="even"; }
-    else { cls="odd"; }
-
-    //sort fields alphabetically by name
-    var sorted = sortkeys(doc); 
-    for (i in sorted) {
-        var key=sorted[i];
-        var value=doc[key];
-        field=remove_field_type(key);
-        fields[field] = key;
-        $("#records").append("<div class=\"row "+cls+"\"><div class=\"column-field\"><a href=\"#"+key+"\">"+field+"</a></div><div class=\"column-value\">"+value+"</div></div>");
-        }
-    });
-
-// add all fields to the fields dropdown in the form
-$('#search-field option').remove();
-var sorted = sortkeys(fields);
-for (i in sorted) {
-    var key=sorted[i];
-    var value=fields[key];
-    $('#search-field').append($("<option/>", {
-        value: value,
-        text: key 
-        }));
-    }
-
-if (ss.search_field) {
-    $("#search-field").val(ss.search_field);
-    }
-if (ss.search_for) {
-    $("#search-for").val(ss.search_for);
-    }
-
-// this adds a new facet field
-$(".column-field a").click(function() {
-    // remove the leading # 
-    var field=this.hash+"";
-    field=field.split("#")[1];
-    ss.facet_field.push(field);
-    ss.redirect();
-    });
-
-// pager link for records header, prev or next
-$(".records-header.pager a").click(function() {
-    // remove the leading # 
-    var field=this.hash+"";
-    field=field.split("=")[1];
-    ss.start=field;
-    ss.redirect();
-    });
-
-
-}
-
-//----------------------------------------------------------------------------
-// inputs
-//     field - solr field name like date_dt
-// outputs
-//     string with the final underscore and type removed
-function remove_field_type(field) {
-words=field.split("_");
-if(words.length > 1){
-    words=words.slice(0,words.length-1);
-    }
-return words.join("_")
-}
-
-//----------------------------------------------------------------------------
-// inputs
-//     data - json object containing solr date facet counts
-// outputs
-//
-function process_facets(data){
-process_date_facets(data);
-process_facet_fields(data);
-// FIX - this filter requires that you hold down the ctrl key
-// across different statsblocks.  bummer.
-$(".statsblocks").selectable({filter: $(".block-text"),
-    selected: function(event, ui) {
-        // this updates the start and end input boxes to times selected
-        // in the date facet
-        // FIX hardcoded ss
-        var fmap = ss.get_facet_selections();
-        dates = fmap['date_dt'];
-        if(dates) {
-            var start_dt=new Date(dates[0]);
-            var end_dt=new Date(dates[dates.length-1]);
-            $("#start").val(neat_time(start_dt));
-            $("#start").attr("zulu",dates[0]);
-            $("#end").val(neat_time(end_dt));
-            $("#end").attr("zulu",dates[dates.length-1]);
-            }
-        }
-    });
-}
-
-//----------------------------------------------------------------------------
-// inputs
-//     data - solr json object 
-// outputs
-//
-//----------------------------------------------------------------------------
-function process_facet_fields(data){
-$("#facets").empty();
-var fields=data.facet_counts.facet_fields;
-for (field in fields) {
-
-    // add a div for this facet
-    // FIX - the wrapper for these facets is a problem and jumps down
-    // once it fills the screen.
-    // FIX - remove closer X from date, type, and server
-
-    var html = "<div class=\"facet-wrap\">"+
-        "<div id=\""+field+"-header\" class=\"records-header\">"+remove_field_type(field) +
-        "<div class=\"closer\"><a href=\"#close="+field+"-header\">X</a></div>" +
-        "</div><div id=\""+field+"\" class=\"statsblocks\"></div></div>";
-
-    $("#facets").append(html);
-
-    var selector = "#"+field;
-    var thefield = eval("data.facet_counts.facet_fields" + "." + field);
-    var max = max_dict(thefield);
-    $.each(thefield,function(key,value) {
-        var percent = Math.floor(value/max*100)
-        var overlay = commify(value)
-        var attrs = { "facet-field-name" : field,
-                      "facet-field-value" : key };
-        $(selector).append(block(percent,overlay,key,attrs));
-        });
-    }
-
-// this removes a facet field
-$(".closer a").click(function() {
-   // get everything after =
-    var field=this.hash+"";
-    field=field.split("=")[1];
-    $("#"+field).parent().fadeOut('slow', function() {
-        var ff=field.replace("-header","");
-        ss.facet_field = remove_from_array(ss.facet_field,ff);
-        });
-    });
-
-
-}
-
-//----------------------------------------------------------------------------
-// inputs
-//     data - json object containing solr date facet counts
-// outputs
-//
-//----------------------------------------------------------------------------
-function process_date_facets(data){
-var dates = data.facet_counts.facet_ranges.date_dt.counts;
-var max = max_dict(dates);
-$('#dateblocks').empty()
-$.each(dates,function(key, value) {
-    var attrs={ "facet-field-name" : "date_dt",
-                "facet-field-value" : key };
-    percent = Math.floor(value/max*100);
-    var dt = new Date(key);
-    overlay = commify(value);
-    $("#dateblocks").append(block(percent,overlay,neat_time(dt),attrs));
-    });
-}
 
 //----------------------------------------------------------------------------
 // initialize - initialize query parameters, handle start-up tasks for page
