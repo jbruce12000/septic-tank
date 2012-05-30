@@ -169,22 +169,22 @@ return kvps.join(" ");
 //     commified string
 //----------------------------------------------------------------------------
 function commify(num) {
-        if(typeof(num) == "number") {
-            nStr = num.toString();
-            }
-        else {
-            nStr = num
-            }
-        nStr += '';
-        x = nStr.split('.');
-        x1 = x[0];
-        x2 = x.length > 1 ? '.' + x[1] : '';
-        var rgx = /(\d+)(\d{3})/;
-        while (rgx.test(x1)) {
-                x1 = x1.replace(rgx, '$1' + ',' + '$2');
+    if(typeof(num) == "number") {
+        nStr = num.toString();
         }
-        return x1 + x2;
-}
+    else {
+        nStr = num
+        }
+    nStr += '';
+    x = nStr.split('.');
+    x1 = x[0];
+    x2 = x.length > 1 ? '.' + x[1] : '';
+    var rgx = /(\d+)(\d{3})/;
+    while (rgx.test(x1)) {
+        x1 = x1.replace(rgx, '$1' + ',' + '$2');
+        }
+    return x1 + x2;
+    }
 
 
 //----------------------------------------------------------------------------
@@ -558,7 +558,9 @@ this.process_facet_fields = function(data) {
 this.process_date_facets = function(data) {
     var dates = data.facet_counts.facet_ranges.date_dt.counts;
     var max = max_dict(dates);
-    $('#dateblocks').empty()
+    var html = "<div id=\"date-header\" class=\"records-header\">Date/Time<div class=\"closer\"><a href=\"#close=date-header\">X</a></div></div><div id=\"dateblocks\" class=\"statsblocks\"></div>";
+    $("#date-facet-wrap").empty();
+    $("#date-facet-wrap").append(html);
     $.each(dates,function(key, value) {
         var attrs={ "facet-field-name" : "date_dt",
                     "facet-field-value" : key };
