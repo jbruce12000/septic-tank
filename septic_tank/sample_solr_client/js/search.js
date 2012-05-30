@@ -720,7 +720,6 @@ function initialize() {
 // global, on purpose.
 ss = new solrsearch();
 
-//fix - need a clear button
 $("#submit").click(function() {
     ss.start=0;
     ss.query();
