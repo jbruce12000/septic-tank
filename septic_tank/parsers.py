@@ -55,8 +55,12 @@ class CSVParser(Parser):
             return self.parse(data)
         if isinstance(data,dict):
             if self.parse_field in data:
-                return self.parse(data[self.parse_field])
+                captured = self.parse(data[self.parse_field])
+                if captured:
+                    data.update(captured)
+                    return data
         return None
+
                     
     def parse(self,data):
         '''
