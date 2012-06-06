@@ -89,7 +89,8 @@ class CSVParser(Parser):
                     del output[None]
                 return output
             return None
-        except csv.Error, e:
+        except Exception, e:
+            # excepting just csv.Error is not enough because of unicode errors
             logging.error('csv parse error: %s',str(e))
         return None
         
