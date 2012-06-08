@@ -15,9 +15,15 @@ TESTS:
 - adeza vim plugin (https://github.com/alfredodeza/pytest.vim)
 
 EXPLORE:
+- using ZMQ to split work among multiple workers
+  - maybe use ZMQ pipeline model
+  - maybe use multiprocessing module
+- add url shortener - like bitly
 - pypy - might be a huge speed improvement for the centralized processor
   * failed to get a virtualenv running with pypy.  pyzmq_static would not
     compile properly under pypy
+  * works using pyzmq-ctypes (this needs to be added to requirements if I get it to work)
+
 - using mlt in searching for similar records in solr
 - inotify, apt-get inotify-tools
 - https://github.com/datagrok/home/blob/master/bin/changewatch
