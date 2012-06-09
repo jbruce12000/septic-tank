@@ -37,7 +37,7 @@ class JSONOutput(Output):
         return data
 
 class ZeroMQOutput(Output):
-    def __init__(self,host='127.0.0.1', port='8001'):
+    def __init__(self,host='127.0.0.1', port='8001', zmq_socket_type=zmq.REQ):
         super(ZeroMQOutput, self).__init__()
         self.host = host
         self.port = port
@@ -81,6 +81,29 @@ class ZeroMQOutput(Output):
         # if I get here something bad happened.  reconnect.
         self.reconnect()
         return None
+
+class ZeroMQParallelOutput(Output):
+    '''
+    An output used to load balance records across multiple processes.
+    '''
+    def __init__(self, host='127.0.0.1', port=5557):
+        super(ZeroMQParallelOutput, self).__init__()
+        self.host = host
+        self.port = port
+        self.addr = 'tcp://%s:%s' % (host,port)
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PUSH)
+        self.socket.connect(self.addr)
+
+    def execute(self,data):
+        logging.debug('%s execute with data %s' % (type(self),data))
+        msg = json.dumps(data,separators=(',',':'))
+        try:
+            self.socket.send(msg)
+        except Exception,err:
+            logging.error('zeromq socket send error: %s' % str(err))
+            return None
+        return data
 
 
 class SOLROutput(Output):

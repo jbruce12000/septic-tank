@@ -59,6 +59,24 @@ class Pipeline(object):
         for pipe in self.pipes:
             pipe.pipe_cache = []
 
+
+class ParallelPipeline(Pipeline):
+    '''
+    A pipeline that runs as many parallel processes.  It uses a hidden
+    zeromq input and output.  A parallel pipeline is useful for parsing
+    and reformatting on a multi-processor machine.
+    '''    
+    def __init__(self,pipes=[],processes=2,output_port=5557,input_port=5558):
+        self.pipes = pipes
+        self.processes = processes
+        
+        # need to create the ZMQ start and end of this pipeline
+        # the start and end would be part of the parent process
+        # the children would be the pipeline in between
+   
+        super(ParallelPipeline, self).__init__(pipes=pipes)
+
+
 class Pipe(object):
     def __init__(self,name=''):
         self.pipe_cache = []

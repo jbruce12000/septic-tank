@@ -43,8 +43,6 @@ class ZeroMQInput(Input):
             logging.error('zeromq error: %s' % str(err))
             self.reconnect()
             return None
-        
- 
 
     def from_json(self,msg):
         '''
@@ -55,6 +53,31 @@ class ZeroMQInput(Input):
         except: 
             pass
         return msg
+
+class ZeroMQParallelInput(Input):
+    '''
+    An input used to read records from multiple processes.
+    '''
+    def __init__(self,host='*', port='8001'):
+        super(ZeroMQParallelInput, self).__init__()
+        self.host = host
+        self.port = port
+        self.addr = 'tcp://%s:%s' % (host,port)
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PULL)
+        self.socket.bind(self.addr)
+
+    def output(self):
+        try:
+            msg = self.socket.recv()
+            logging.debug('zeromq msg received: %s' % msg)
+            msg = self.from_json(msg)
+            return msg
+        except Exception, err:
+            logging.error('zeromq error: %s' % str(err))
+            return None
+
+
 
 class MultilineFileInput(Input):
     '''
