@@ -86,7 +86,7 @@ class ZeroMQParallelOutput(Output):
     '''
     An output used to load balance records across multiple processes.
     '''
-    def __init__(self, host='127.0.0.1', port=5557):
+    def __init__(self, host='127.0.0.1', port=5566):
         super(ZeroMQParallelOutput, self).__init__()
         self.host = host
         self.port = port

@@ -58,7 +58,7 @@ class ZeroMQParallelInput(Input):
     '''
     An input used to read records from multiple processes.
     '''
-    def __init__(self,host='*', port='8001'):
+    def __init__(self,host='*', port='8866'):
         super(ZeroMQParallelInput, self).__init__()
         self.host = host
         self.port = port
