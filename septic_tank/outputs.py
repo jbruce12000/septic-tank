@@ -55,7 +55,11 @@ class ZeroMQOutput(Output):
         self.context.term()
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
-        self.socket.connect(self.addr)
+        try:
+            self.socket.connect(self.addr)
+        except Exception, err:
+            logging.error('zeromq connect error: %s' % str(err))
+            return None
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
  
