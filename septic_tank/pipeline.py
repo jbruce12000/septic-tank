@@ -100,6 +100,7 @@ class ParallelPipeline(Pipeline):
     def next(self):
         # parent process should not be able to run next
         # need to verify this is not the parent
+        pass
 
     def _execute(self):
         '''
