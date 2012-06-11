@@ -29,11 +29,7 @@ class ZeroMQInput(Input):
         self.context.term()
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
-        try:
-            self.socket.bind(self.addr)
-        except Exception, err:
-            logging.error('zeromq bind error: %s' % str(err))
-            return None
+        self.socket.bind(self.addr)
 
     def output(self):
         try:
