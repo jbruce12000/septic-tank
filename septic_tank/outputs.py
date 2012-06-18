@@ -82,9 +82,11 @@ class ZeroMQOutput(Output):
         self.reconnect()
         return None
 
-class ZeroMQParallelOutput(Output):
+class ZeroMQParentParallelOutput(Output):
     '''
     An output used to load balance records across multiple processes.
+    This is used by the parent process to get data to the children in
+    load balanced fashion.
     '''
     def __init__(self, host='127.0.0.1', port=5566):
         super(ZeroMQParallelOutput, self).__init__()
@@ -104,6 +106,31 @@ class ZeroMQParallelOutput(Output):
             logging.error('zeromq socket send error: %s' % str(err))
             return None
         return data
+
+class ZeroMQChildParallelOutput(Output):
+    '''
+    An output used to return data from multiple parallel processes to 
+    the parent.
+    '''
+    def __init__(self, host='127.0.0.1', port=8866):
+        super(ZeroMQParallelOutput, self).__init__()
+        self.host = host
+        self.port = port
+        self.addr = 'tcp://%s:%s' % (host,port)
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PUSH)
+        self.socket.connect(self.addr)
+
+    def execute(self,data):
+        logging.debug('%s execute with data %s' % (type(self),data))
+        msg = json.dumps(data,separators=(',',':'))
+        try:
+            self.socket.send(msg)
+        except Exception,err:
+            logging.error('zeromq socket send error: %s' % str(err))
+            return None
+        return data
+
 
 
 class SOLROutput(Output):
