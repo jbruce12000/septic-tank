@@ -88,14 +88,15 @@ class ZeroMQParentParallelOutput(Output):
     This is used by the parent process to get data to the children in
     load balanced fashion.
     '''
-    def __init__(self, host='127.0.0.1', port=5566):
-        super(ZeroMQParallelOutput, self).__init__()
+    def __init__(self, host='*', port=6666):
+        super(ZeroMQParentParallelOutput, self).__init__()
         self.host = host
         self.port = port
         self.addr = 'tcp://%s:%s' % (host,port)
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUSH)
-        self.socket.connect(self.addr)
+        self.socket.bind(self.addr)
+        print "ZeroMQParentParallelOutput %s" % self.addr
 
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
@@ -112,8 +113,8 @@ class ZeroMQChildParallelOutput(Output):
     An output used to return data from multiple parallel processes to 
     the parent.
     '''
-    def __init__(self, host='127.0.0.1', port=8866):
-        super(ZeroMQParallelOutput, self).__init__()
+    def __init__(self, host='127.0.0.1', port=6667):
+        super(ZeroMQChildParallelOutput, self).__init__()
         self.host = host
         self.port = port
         self.addr = 'tcp://%s:%s' % (host,port)
