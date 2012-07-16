@@ -19,6 +19,7 @@ EXPLORE:
   - maybe use ZMQ pipeline model
   - maybe use multiprocessing module
 - add url shortener - like bitly
+- make hostname addition a filter
 - pypy - might be a huge speed improvement for the centralized processor
   * failed to get a virtualenv running with pypy.  pyzmq_static would not
     compile properly under pypy
