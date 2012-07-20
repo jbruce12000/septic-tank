@@ -83,13 +83,11 @@ class Pipe(object):
             return self.pipe_cache.pop(0)
         return None
 
-    # fix = this should be an iterator. powered by a generator?
     def execute(self,data):
         '''
         default behavior is to pass data through.
         children are expected to override 
         '''
-        # fix self.name wont always be set
         logging.debug('%s execute with data %s' % (type(self),data))
         return data
 
