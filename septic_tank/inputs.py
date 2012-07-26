@@ -54,6 +54,75 @@ class ZeroMQInput(Input):
             pass
         return msg
 
+class ZeroMQParentParallelInput(Input):
+    '''
+    An input used to read records from multiple processes.
+    This is used by the parent process to receive data from the children.
+    '''
+    def __init__(self,host='*', port=6667):
+        super(ZeroMQParentParallelInput, self).__init__()
+        self.host = host
+        self.port = port
+        self.addr = 'tcp://%s:%s' % (host,port)
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PULL)
+        self.socket.bind(self.addr)
+
+    def output(self):
+        try:
+            msg = self.socket.recv()
+            logging.debug('zeromq msg received: %s' % msg)
+            msg = self.from_json(msg)
+            return msg
+        except Exception, err:
+            logging.error('zeromq error: %s' % str(err))
+            return None
+
+    def from_json(self,msg):
+        '''
+        convert msg from json if possible, or return msg
+        '''
+        try:
+            msg = json.loads(msg)
+        except:
+            pass
+        return msg
+
+
+class ZeroMQChildParallelInput(Input):
+    '''
+    This is used by child parallel processes to recieve data from the parent.
+    '''
+    def __init__(self,host='127.0.0.1', port=6666):
+        super(ZeroMQChildParallelInput, self).__init__()
+        self.host = host
+        self.port = port
+        self.addr = 'tcp://%s:%s' % (host,port)
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PULL)
+        self.socket.connect(self.addr)
+
+    def output(self):
+        logging.debug('ZeroMQChildParallelInput output called')
+        try:
+            msg = self.socket.recv()
+            logging.debug('zeromq msg received: %s' % msg)
+            msg = self.from_json(msg)
+            return msg
+        except Exception, err:
+            logging.error('zeromq error: %s' % str(err))
+            return None
+
+    def from_json(self,msg):
+        '''
+        convert msg from json if possible, or return msg
+        '''
+        try:
+            msg = json.loads(msg)
+        except:
+            pass
+        return msg
+
 
 class MultilineFileInput(Input):
     '''

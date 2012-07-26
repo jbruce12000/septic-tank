@@ -61,6 +61,65 @@ class Pipeline(object):
             pipe.pipe_cache = []
 
 
+class ParallelPipeline(Pipeline):
+    '''
+    A pipeline that runs as many parallel processes.  It uses a hidden
+    zeromq input and output.  A parallel pipeline is useful for parsing
+    and reformatting on a multi-processor machine.
+    '''    
+    # fix - need to find a way for ports to be chosen automatically.  zeromq
+    # does not support this.  Maybe bind to port O, grab the port number,
+    # shut down the socket, and give it to zeromq.
+    def is_parent(self):
+        if os.getpid() == self.parentpid:
+            return True
+        return False
+
+    def __init__(self,pipes=[],maxprocs=2,output_port=6666,input_port=6667):
+        from outputs import ZeroMQParentParallelOutput
+        from inputs import ZeroMQParentParallelInput
+
+        self.parentpid = os.getpid()
+        self.pipes = pipes
+        self.parent_input = self.pipes.pop(0)
+       
+        self.maxprocs = maxprocs
+        self.procs = []
+
+        # fix - not yet used
+        self.output_port = output_port
+        self.input_port = input_port
+
+        super(ParallelPipeline, self).__init__(pipes=pipes)
+        self.create_parallel_processes()
+
+        # the pipeline looks different depending on whether this is parent
+        # or one of the potential many children.  The parent sees only
+        # an output to the children.
+        # The children receive the data from the parent and process the 
+        # pipeline
+        if self.is_parent():
+            self.parentzmqout = ZeroMQParentParallelOutput()
+            self.pipes = [ self.parent_input, self.parentzmqout ]
+
+    def create_parallel_processes(self):
+        '''
+        create the children
+        '''
+        from multiprocessing import Process
+        for x in range(self.maxprocs):
+            self.procs.append(Process(target=self.loop_forever))
+            self.procs[x].start()
+
+    def loop_forever(self):
+        from outputs import ZeroMQChildParallelOutput
+        from inputs import ZeroMQChildParallelInput
+        self.childzmqin = ZeroMQChildParallelInput()
+        self.pipes.insert(0,self.childzmqin)
+
+        while(True):
+            self.next();
+
 class Pipe(object):
     def __init__(self,name=''):
         self.pipe_cache = []
@@ -83,11 +142,13 @@ class Pipe(object):
             return self.pipe_cache.pop(0)
         return None
 
+    # fix = this should be an iterator. powered by a generator?
     def execute(self,data):
         '''
         default behavior is to pass data through.
         children are expected to override 
         '''
+        # fix self.name wont always be set
         logging.debug('%s execute with data %s' % (type(self),data))
         return data
 
