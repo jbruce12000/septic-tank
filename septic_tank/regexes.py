@@ -59,31 +59,16 @@ regs = {
     "celery_task" : "(?P<celery_task>[A-Za-z.]+)",
     "celery_hash" : "\[(?P<celery_hash>[a-f0-9-]+)\]\:",
     "celery_msg" : "(?P<celery_msg>.*)",
-    "celerylog" : "\[{{yyyy-mm-dd hh:mm:ss,ms}}: {{level}}/{{poolworker}}\] ({{celery_task}}{{celery_hash}}|)\s*{{celery_msg}}"
+    "celerylog" : "\[{{yyyy-mm-dd hh:mm:ss,ms}}: {{level}}/{{poolworker}}\] ({{celery_task}}{{celery_hash}}|)\s*{{celery_msg}}",
+
+    # pgbouncer logs
+    # 2012-08-08 15:11:57.281 15674 LOG C-0x2aaaaad02000: ellington_app/django@::ffff:10.188.10.20:35816 login attempt: db=ellington_app user=django
+    "yyyy-mm-dd hh:mm:ss.ms" : "(?P<date>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+)",
+    "pid" : "(?P<pid>\d+)",
+    "dbconnection" : "(?P<dbconnection>..0x[0-9|a-f]+)",
+    "database" : "(?P<database>(\w|_)+)",
+    "pgbouncerlog" : "{{yyyy-mm-dd hh:mm:ss.ms}} {{pid}} LOG {{dbconnection}}: {{database}}/{{user}}@::ffff:{{ip}}:{{port}} {{msg}}",
+
     }
 
 
-#COMBINEDAPACHELOG %{IPORHOST:clientip} %{USER:ident} %{USER:auth} \[%{HTTPDATE:timestamp}\] "%{WORD:verb} %{URIPATHPARAM:request} HTTP/%{NUMBER:httpversion}" %{NUMBER:response} (?:%{NUMBER:bytes}|-) "(?:%{URI:referrer}|-)" %{QS:agent}
-#IPORHOST (?:%{HOSTNAME}|%{IP})
-#USERNAME [a-zA-Z0-9_-]+
-#USER %{USERNAME}
-#HTTPDATE %{MONTHDAY}/%{MONTH}/%{YEAR}:%{TIME} %{INT:ZONE}
-#MONTHDAY (?:(?:0[1-9])|(?:[12][0-9])|(?:3[01])|[1-9])
-#YEAR [0-9]+
-#TIME (?!<[0-9])%{HOUR}:%{MINUTE}(?::%{SECOND})(?![0-9])
-#HOUR (?:2[0123]|[01][0-9])
-#MINUTE (?:[0-5][0-9])
-## '60' is a leap second in most time standards and thus is valid.
-#SECOND (?:(?:[0-5][0-9]|60)(?:[.,][0-9]+)?)
-#INT (?:[+-]?(?:[0-9]+))
-#WORD \b\w+\b
-#URIPATHPARAM %{URIPATH}(?:%{URIPARAM})?
-#URIPATH (?:/[A-Za-z0-9$.+!*'(),~:#%_-]*)+
-#URIPARAM \?[A-Za-z0-9$.+!*'(),~#%&/=:;_-]*
-#NUMBER (?:%{BASE10NUM})
-#BASE10NUM (?<![0-9.+-])(?>[+-]?(?:(?:[0-9]+(?:\.[0-9]+)?)|(?:\.[0-9]+)))
-#URI %{URIPROTO}://(?:%{USER}(?::[^@]*)?@)?(?:%{URIHOST})?(?:%{URIPATHPARAM})?
-#URIPROTO [A-Za-z]+(\+[A-Za-z+]+)?
-#URIHOST %{IPORHOST}(?::%{POSINT:port})?
-#QS %{QUOTEDSTRING}
-#QUOTEDSTRING (?:(?<!\\)(?:"(?:\\.|[^\\"]+)*"|(?:'(?:\\.|[^\\']+)*')|(?:`(?:\\.|[^\\`]+)*`)))
