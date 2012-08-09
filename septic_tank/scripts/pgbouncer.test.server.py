@@ -23,7 +23,7 @@ if __name__ == "__main__":
                      'dbconnection' : '_s',
                      'database'    : '_s',
                      'user'        : '_s',
-                     'server'      : '_ti',
+                     'server'      : '_s',
                      'file'        : '_tp',
                      'port'        : '_l', }
 

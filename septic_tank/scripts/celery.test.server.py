@@ -31,7 +31,7 @@ if __name__ == "__main__":
     stdout = STDOutput()
     jsout = JSONOutput(sort_keys=True, indent=2)
     solr_typemap = { 'date'        : '_dt',
-                     'server'      : '_ti',
+                     'server'      : '_s',
                      'file'        : '_tp',
                      'celery_task' : '_ti' }
 

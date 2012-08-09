@@ -23,7 +23,7 @@ if __name__ == "__main__":
                      'hostname'    : '_ti',
                      'client_ip'   : '_ti',
                      'uri'         : '_tp',
-                     'server'      : '_ti',
+                     'server'      : '_s',
                      'file'        : '_tp',
                      'serve_time'  : '_l', }
 

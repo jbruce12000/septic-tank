@@ -54,7 +54,7 @@ if __name__ == "__main__":
                      'module'      : '_ti',
                      'client_ip'   : '_ti',
                      'uri'         : '_tp',
-                     'server'      : '_ti',
+                     'server'      : '_s',
                      'file'        : '_tp', }
     solr = SOLROutput('http://localhost:8080/solr/medley',
         typemap=solr_typemap,
