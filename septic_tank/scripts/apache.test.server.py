@@ -16,7 +16,6 @@ if __name__ == "__main__":
     p = RegexParser(use = ['apachelog']) 
     gf = GrepFilter(fields=['uri'],regex='health_check_status', reverse=True)
     rff = RemoveFieldsFilter(fields = ['msg'])
-    lcf = LCFilter()
     zdf = ZuluDateFilter(fields=['date'],informat="%d/%b/%Y:%H:%M:%S")
     uniq = UniqFilter()
     solr_typemap = { 'date'        : '_dt',
