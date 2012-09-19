@@ -5,6 +5,7 @@ import logging
 import sys
 import time
 import zmq
+import sqlite3 as lite;
 
 class Output(Pipe):
     def data_invalid(self,data):
@@ -193,3 +194,67 @@ class SOLROutput(Output):
         self.commitrate = 0
         logging.debug('shutting down, clearing cache to solr')
         self.commit_to_solr()
+
+class SQLiteOutput(Output):
+
+    # FIX - needs to handle uniq id as docid???
+
+    def __init__(self,path="ft.db",commitrate=10000):
+        super(SQLiteOutput, self).__init__()
+        self.path = path
+        self.commitrate = commitrate
+        self.sqlitecache = []
+        self.commityet = 0
+        self.tables = {};
+
+    def create_table_sql_for(self,data):
+        columns=",".join(data.keys())
+        return "create virtual table %s using fts4(%s)" % (data['type'],columns)
+
+    def execute(self,data):
+        logging.debug('%s execute with data %s' % (type(self),data))
+        if self.data_invalid(data):
+            logging.debug('data is invalid %s' % data)
+            return None
+
+        # create table sql
+        if data['type'] not in self.tables:
+            self.tables['type']=self.create_table_sql_for(data)
+
+        # insert sql
+        sql="insert into %s (%s) values (%s)" % (data['type'],",".join(data.keys()),','.join([ "'%s'" % x for x in data.values()]))
+        self.sqlitecache.append(sql)
+        self.commityet += 1
+
+        # commit every once and a while
+        if(self.commityet >= self.commitrate):
+            self.commit_to_sqlite()
+
+        # required at end of pipeline
+        return data
+
+    def create_tables(self):
+        for sql in self.tables.values():
+            cur = self.conn.cursor()
+            try:
+                cur.execute(sql)
+            except lite.OperationalError:
+                continue
+      
+    def commit_to_sqlite(self):
+        self.conn = lite.connect(self.path)
+        self.create_tables()
+        self.conn.commit()
+        try:
+            cur = self.conn.cursor()
+            for sql in self.sqlitecache:
+                cur.execute(sql)    
+            self.conn.commit()
+            self.conn.close()
+            self.tables = {}
+            self.sqlitecache = []
+            self.commityet = 0
+        except Exception, e:
+            # yes, except everything.
+            logging.error('error committing to SQLite %s' % e)
+    
