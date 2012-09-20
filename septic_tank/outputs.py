@@ -5,7 +5,8 @@ import logging
 import sys
 import time
 import zmq
-import sqlite3 as lite;
+import sqlite3 as lite
+from collections import defaultdict
 
 class Output(Pipe):
     def data_invalid(self,data):
@@ -203,13 +204,23 @@ class SQLiteOutput(Output):
         super(SQLiteOutput, self).__init__()
         self.path = path
         self.commitrate = commitrate
-        self.sqlitecache = []
+        self.sqlitecache = defaultdict(list)
         self.commityet = 0
         self.tables = {};
 
     def create_table_sql_for(self,data):
         columns=",".join(data.keys())
         return "create virtual table %s using fts4(%s)" % (data['type'],columns)
+
+    def create_insert_sql_for(self,data):
+        columns = sorted(data.keys())
+        return "insert into %s (%s) values (%s)" % (data['type'],','.join(columns),','.join("?" for x in columns))
+
+    def create_insert_tuple_for(self,data):
+        values = []
+        for key in sorted(data.iterkeys()):
+            values.append(data[key])
+        return values
 
     def execute(self,data):
         logging.debug('%s execute with data %s' % (type(self),data))
@@ -220,10 +231,11 @@ class SQLiteOutput(Output):
         # create table sql
         if data['type'] not in self.tables:
             self.tables['type']=self.create_table_sql_for(data)
-
-        # insert sql
-        sql="insert into %s (%s) values (%s)" % (data['type'],",".join(data.keys()),','.join([ "'%s'" % x for x in data.values()]))
-        self.sqlitecache.append(sql)
+         
+        # this is a defaultdict like this...
+        # "insert into table (col1,col2) values (?,?)" => [(1,2),(3,4)]
+        sql = self.create_insert_sql_for(data)
+        self.sqlitecache[sql].append(self.create_insert_tuple_for(data))
         self.commityet += 1
 
         # commit every once and a while
@@ -240,21 +252,28 @@ class SQLiteOutput(Output):
                 cur.execute(sql)
             except lite.OperationalError:
                 continue
-      
+
+    # FIX - should this fail forever?  if there is just a single column
+    # added to the data, it will cause this to fail.   
     def commit_to_sqlite(self):
         self.conn = lite.connect(self.path)
         self.create_tables()
         self.conn.commit()
+        #logging.error(self.sqlitecache)
+        #sys.exit()
+        #import pdb; pdb.set_trace()
         try:
             cur = self.conn.cursor()
             for sql in self.sqlitecache:
-                cur.execute(sql)    
+                cur.executemany(sql,self.sqlitecache[sql])    
             self.conn.commit()
             self.conn.close()
             self.tables = {}
-            self.sqlitecache = []
+            self.sqlitecache = defaultdict(list)
+            logging.debug('committed %s recs to sqlite' % self.commityet)
             self.commityet = 0
         except Exception, e:
             # yes, except everything.
             logging.error('error committing to SQLite %s' % e)
+            logging.error(self.sqlitecache)
     
