@@ -210,7 +210,8 @@ class SQLiteOutput(Output):
 
     def create_table_sql_for(self,data):
         columns=",".join(data.keys())
-        return "create virtual table %s using fts4(%s)" % (data['type'],columns)
+        #return "create virtual table %s using fts4(%s)" % (data['type'],columns)
+        return "create table if not exists %s (%s)" % (data['type'],columns)
 
     def create_insert_sql_for(self,data):
         columns = sorted(data.keys())
@@ -277,3 +278,6 @@ class SQLiteOutput(Output):
             logging.error('error committing to SQLite %s' % e)
             logging.error(self.sqlitecache)
     
+    def __del__(self):
+        logging.debug('shutting down, clearing cache to sqlite')
+        self.commit_to_sqlite()
