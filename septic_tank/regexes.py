@@ -69,6 +69,9 @@ regs = {
     "database" : "(?P<database>(\w|_)+)",
     "pgbouncerlog" : "{{yyyy-mm-dd hh:mm:ss.ms}} {{pid}} LOG {{dbconnection}}: {{database}}/{{user}}@::ffff:{{ip}}:{{port}} {{msg}}",
 
+    # medley debug logs for PID middleware
+    #2012-11-13 22:56:45,072 - medley.util.middleware.LogPIDMiddleware - DEBUG - 32070|meminfo(rss=158584832, vms=581275648)|/|asdf=2&dasdfasdf=5
+    "medleypidlog" : "{{yyyy-mm-dd hh:mm:ss,ms}} \- (?P<module>[A-Za-z0-9.]+) \- {{level}} \- {{pid}}\|meminfo\(rss\=(?P<resident>\d+), vms\=(?P<virtual>\d+)\)\|{{uri}}\|(?P<query_params>.*)"
     }
 
 
