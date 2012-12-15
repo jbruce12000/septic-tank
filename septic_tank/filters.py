@@ -220,3 +220,18 @@ class LCFilter(Filter):
                     data[key] = data[key].lower()
         return data
 
+class PostgresMessageFilter(Filter):
+    '''
+    the postgres message field contains a duration and a statement.
+    this splits those out into two fields 
+    '''
+    def execute(self,data):
+        logging.debug('%s execute with data %s' % (type(self),data))
+        if data is None:
+            return data
+        if 'message' in data:
+            m = re.search('duration: (.*) ms  statement: (.*)',data['message'])
+            if m:
+                data['duration'] = m.group(1)
+                data['sql'] = m.group(2)
+        return data
