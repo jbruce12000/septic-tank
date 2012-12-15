@@ -220,7 +220,7 @@ class SQLiteOutput(Output):
     def create_insert_tuple_for(self,data):
         values = []
         for key in sorted(data.iterkeys()):
-            values.append(data[key])
+            values.append(unicode(data[key], errors='ignore'))
         return values
 
     def execute(self,data):
