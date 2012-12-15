@@ -186,5 +186,5 @@ class RegexParser(Parser):
                 matches['type'] = key
                 return matches
 
-        logging.debug('NO MATCH FOUND %s' % line)
+        logging.info('NO MATCH FOUND %s' % line)
         return None
