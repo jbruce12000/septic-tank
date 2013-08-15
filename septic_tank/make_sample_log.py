@@ -13,7 +13,7 @@ class SampleLog(object):
         self.ips = ['10.0.0.1', '10.0.0.2', '192.168.1.35', '127.0.0.1']
         self.words = ['this','is','a','sample','log','file','generator']
         self.date = datetime.datetime.now()
-        self.delta = datetime.timedelta(minutes=4,seconds=7)
+        self.delta = datetime.timedelta(minutes=0,seconds=3)
 
     def __iter__(self):
         return self

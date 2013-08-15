@@ -1,7 +1,7 @@
 #!/usr/bin/env python    
 
 from pysolr import *
-conn = Solr('http://localhost:8080/solr/medley')
+conn = Solr('http://localhost:8983/solr/collection1')
 conn.delete(q='*:*')
 #conn.delete(q='date_dt:[* TO NOW/DAY-2DAYS]')
 
