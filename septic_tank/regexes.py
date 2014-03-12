@@ -43,11 +43,14 @@ regs = {
     "apache_action" : "(?P<action>[A-Z]+)",
     "uri" : "(?P<uri>(/[A-Za-z0-9 $.+!*'(),~:#%_-]*)+)",
     "query_params" : "(?P<query_params>\?[A-Za-z0-9$.+!*'(),~#%&/=:;_-]*)?",
-    "http_version" : "((HTTP|http)/(?P<http_version>[0-9.]+))?",
+    "http_version" : "((HTTP|http)/(?P<http_version>[0-9.]+))",
     "http_status" : "(?P<http_status>\d+)",
     "bytes" : "(?P<bytes>(\d+|-))",
+    "referer" : "(?P<referer>.*)",
+    "useragent" : "(?P<useragent>.*)",
     "trash" : ".*",
-    "apachelog" : "{{hostname}} {{client_ip}} {{serve_time}} {{apache_date}} \"{{apache_action}} {{uri}}{{query_params}}( |){{http_version}}\" {{http_status}} {{bytes}} {{trash}}",
+    
+    "apachelog" : "{{hostname}} {{client_ip}} {{serve_time}} {{apache_date}} \"{{apache_action}} {{uri}}{{query_params}}( |){{http_version}}\" {{http_status}} {{bytes}} \"{{referer}}\" \"{{useragent}}\"",
     "pagegen_apachelog" : "{{client_ip}} {{serve_time}} {{apache_date}} \"{{apache_action}} {{uri}}{{query_params}}( |){{http_version}}\" {{http_status}} {{bytes}} {{trash}}",
 
     # celery logs
